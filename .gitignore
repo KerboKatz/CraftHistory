@@ -1,3 +1,5 @@
+*.so
+*.csproj
 # Object files
 *.o
 *.ko
