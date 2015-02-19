@@ -1,2 +1,4 @@
-v 1.00
+v 1.0.1
+ *  Added checks for missing parts on already existing craft files
+v 1.0.0
  * Initial release

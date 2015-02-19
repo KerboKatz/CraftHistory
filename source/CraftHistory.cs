@@ -17,7 +17,7 @@ namespace KerboKatz
     private bool workerCompleted                                                  = true;
     private Dictionary<double, int> partCount                                     = new Dictionary<double, int>();
     private Dictionary<string, string[]> historyFilesDic                          = new Dictionary<string, string[]>();
-    private Dictionary<string, Tuple<string, DateTime, int, int, float>> filesDic = new Dictionary<string, Tuple<string, DateTime, int, int, float>>();
+    private Dictionary<string, Tuple<string, DateTime, int, int, float, bool>> filesDic = new Dictionary<string, Tuple<string, DateTime, int, int, float, bool>>();
     private double nextCheck                                                      = 0;
     private float tooltipHeight                                                   = 0;
     private GUIStyle areaStyle;
@@ -53,7 +53,8 @@ namespace KerboKatz
     private string[] files;
     private Vector2 scrollPosition                                                = new Vector2();
     private Vector2 scrollPositionHistory;
-    private Version requiresUtilities                                             = new Version(1, 0, 0);
+    private Version requiresUtilities                                             = new Version(1, 0, 1);
+    private GUIStyle textStyleRed;
 
     private void Awake()
     {
@@ -146,13 +147,16 @@ namespace KerboKatz
 
     private void toggleWindow()
     {
+      Utilities.debug(modName, "Toggling window");
       if (showLoadWindow)
       {
+        Utilities.debug(modName, "Hiding window");
         showLoadWindow = false;
       }
       else
       {
         updateShipList();
+        Utilities.debug(modName, "Showing window");
         showLoadWindow = true;
       }
     }
@@ -275,19 +279,30 @@ namespace KerboKatz
 
     private void updateShipList()
     {
+      Utilities.debug(modName, "Updating shiplist. Clearing dictionaries...");
       filesDic.Clear();
       historyFilesDic.Clear();
+      Utilities.debug(modName, "Done clearing dictionaries. Getting files...");
       files = getFiles(currentSettings.getString("savePath"));
+      Utilities.debug(modName, "Done getting files." + files.Length+ " files found. Looping through files...");
       foreach (string file in files)
       {
+        Utilities.debug(modName, "->Adding file to dictionary...");
         addToFilesDic(file);
+        Utilities.debug(modName, "->Done! Checking for history...");
         var craftFileName = filesDic[file].Item1;
         historyFilesDic.Add(file, Utilities.reverseArray(getFiles(currentSettings.getString("savePath") + craftFileName + "/")));
+        Utilities.debug(modName, "->Done! " + historyFilesDic[file].Length + " files found. Looping through files...");
         foreach (string hFile in historyFilesDic[file])
         {
+          Utilities.debug(modName, "->->Adding file to dictionary...");
           addToFilesDic(hFile);
+          Utilities.debug(modName, "->->Done!");
         }
+        Utilities.debug(modName, "->Done!");
       }
+
+      Utilities.debug(modName, "Done!");
     }
 
     private string[] getFiles(string path)
@@ -304,17 +319,18 @@ namespace KerboKatz
       {
         int partCount, stageCount;
         float vesselCost;
-        getCraftInfo(file, out partCount,out stageCount, out vesselCost);
+        bool vesselComplete;
+        getCraftInfo(file, out partCount, out stageCount, out vesselCost, out vesselComplete);
         FileInfo fileInfo = new FileInfo(file);
-        filesDic.Add(file, new Tuple<string, DateTime, int, int, float>(fileInfo.Name.Replace(".craft", ""), fileInfo.LastWriteTime, partCount, stageCount, vesselCost));
+        filesDic.Add(file, new Tuple<string, DateTime, int, int, float, bool>(fileInfo.Name.Replace(".craft", ""), fileInfo.LastWriteTime, partCount, stageCount, vesselCost, vesselComplete));
       }
     }
 
-    private static void getCraftInfo(string file, out int partCount, out int stageCount, out float vesselCost)
+    private static void getCraftInfo(string file, out int partCount, out int stageCount, out float vesselCost,out bool vesselComplete)
     {
       var nodes = ConfigNode.Load(file).GetNodes("PART");
       partCount = nodes.Length;
-      Utilities.getVesselCostAndStages(nodes, out stageCount, out vesselCost);
+      Utilities.getVesselCostAndStages(nodes, out stageCount, out vesselCost, out vesselComplete);
     }
 
     #region ui
@@ -388,6 +404,8 @@ namespace KerboKatz
       textStyle                                = new GUIStyle(HighLogic.Skin.label);
       textStyle.fixedWidth                     = 150;
       textStyle.margin.left                    = 10;
+      textStyleRed                             = new GUIStyle(textStyle);
+      textStyleRed.normal.textColor            = Color.red;
 
       shipStyle                                = new GUIStyle(HighLogic.Skin.label);
       shipStyle.fixedWidth                     = 270;
@@ -513,9 +531,10 @@ namespace KerboKatz
         var craftPartCount = filesDic[file].Item3;
         var craftStages    = filesDic[file].Item4;
         var craftCost      = filesDic[file].Item5;
+        var vesselComplete = filesDic[file].Item6;
         GUILayout.BeginVertical(areaStyle);
         GUILayout.BeginHorizontal();
-        createCraftInfo(craftFileName, craftEditTime, craftPartCount, craftStages, craftCost);
+        createCraftInfo(craftFileName, craftEditTime, craftPartCount, craftStages, craftCost, vesselComplete);
         GUILayout.BeginVertical();
 
         string historyPath = currentSettings.getString("savePath") + craftFileName + "/";
@@ -530,7 +549,7 @@ namespace KerboKatz
           historyWindow.y  = Screen.height - Input.mousePosition.y;
           GUI.BringWindowToFront(844526732);
         }
-        createCraftLoadButton(file);
+        createCraftLoadButton(file, vesselComplete);
         createCraftDeleteButton(file, historyPath);
         GUILayout.EndVertical();
         GUILayout.EndHorizontal();
@@ -573,9 +592,9 @@ namespace KerboKatz
       updateShipList();
     }
 
-    private void createCraftLoadButton(string file)
+    private void createCraftLoadButton(string file, bool vesselComplete)
     {
-      if (Utilities.createButton("", buttonLoadIconStyle))
+      if (Utilities.createButton("", buttonLoadIconStyle, !vesselComplete))
       {
         loadShip(file);
         showLoadWindow = false;
@@ -583,7 +602,7 @@ namespace KerboKatz
       }
     }
 
-    private void createCraftInfo(string craftFileName, DateTime craftEditTime, int craftPartCount, int craftStages, float craftCost, bool hideDate = false)
+    private void createCraftInfo(string craftFileName, DateTime craftEditTime, int craftPartCount, int craftStages, float craftCost, bool vesselComplete, bool hideDate = false)
     {
       GUILayout.BeginVertical();
       Utilities.createLabel(craftFileName, shipNameStyle);
@@ -592,6 +611,8 @@ namespace KerboKatz
 
       Utilities.createLabel(getPartAndStageString(craftPartCount, "Part", false) + " in " + getPartAndStageString(craftStages, "Stage"), shipStyle);
       Utilities.createLabel("Craft cost: " + craftCost.ToString("N0"), shipStyle);
+      if (!vesselComplete)
+        Utilities.createLabel("Craft is missing Parts", textStyleRed);
       GUILayout.EndVertical();
     }
 
@@ -627,14 +648,15 @@ namespace KerboKatz
         var craftPartCount = filesDic[file].Item3;
         var craftStages    = filesDic[file].Item4;
         var craftCost      = filesDic[file].Item5;
+        var vesselComplete = filesDic[file].Item6;
         GUILayout.BeginVertical(areaStyle);
         GUILayout.BeginHorizontal();
         double craftTime   = 0;
         double.TryParse(craftFileName, out craftTime);
         craftFileName      = Utilities.convertUnixTimestampToDate(craftTime).ToString("yyyy.MM.dd HH:mm:ss");
-        createCraftInfo(craftFileName, craftEditTime, craftPartCount, craftStages, craftCost, true);
+        createCraftInfo(craftFileName, craftEditTime, craftPartCount, craftStages, craftCost, vesselComplete, true);
         GUILayout.BeginVertical();
-        createCraftLoadButton(file);
+        createCraftLoadButton(file, vesselComplete);
         createCraftDeleteButton(file);
         GUILayout.EndVertical();
         GUILayout.EndHorizontal();
