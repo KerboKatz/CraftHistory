@@ -344,7 +344,6 @@ namespace KerboKatz
       }
       files.Sort((x, y) =>
       {
-        Utilities.debug(modName, x.Value + "= -> =" + y.Value);
         if (String.IsNullOrEmpty(y.Value) && !String.IsNullOrEmpty(x.Value))
         {
           return -1;
@@ -355,7 +354,7 @@ namespace KerboKatz
         }
         else
         {
-          return x.Value.CompareTo(y.Value);
+          return x.Key.CompareTo(y.Key);
         }
       });
       Utilities.debug(modName, "Done!");
