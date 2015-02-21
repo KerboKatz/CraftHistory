@@ -10,62 +10,69 @@ namespace KerboKatz
   public class CraftHistory : MonoBehaviour
   {
     private ApplicationLauncherButton button;
-    private bool initStyle                                                        = false;
+    private bool disableAutoSave;
+    private bool hideUnloadableCrafts;
+    private bool initStyle                                                              = false;
     private bool saveAll;
     private bool showLoadWindow;
-    private bool windowCenterd                                                    = false;
-    private bool workerCompleted                                                  = true;
-    private Dictionary<double, int> partCount                                     = new Dictionary<double, int>();
-    private Dictionary<string, string[]> historyFilesDic                          = new Dictionary<string, string[]>();
+    private bool windowCenterd                                                          = false;
+    private bool workerCompleted                                                        = true;
+    private Dictionary<double, int> partCount                                           = new Dictionary<double, int>();
+    private Dictionary<string, bool> toggleCategories                                   = new Dictionary<string, bool>();
+    private Dictionary<string, string[]> historyFilesDic                                = new Dictionary<string, string[]>();
     private Dictionary<string, Tuple<string, DateTime, int, int, float, bool>> filesDic = new Dictionary<string, Tuple<string, DateTime, int, int, float, bool>>();
-    private double nextCheck                                                      = 0;
-    private float tooltipHeight                                                   = 0;
+    private double nextCheck                                                            = 0;
+    private float tooltipHeight                                                         = 0;
     private GUIStyle areaStyle;
+    private GUIStyle arrowStyle;
     private GUIStyle buttonDeleteIconStyle;
     private GUIStyle buttonHistoryIconStyle;
     private GUIStyle buttonLoadIconStyle;
     private GUIStyle buttonStyle;
+    private GUIStyle categoryStyle;
+    private GUIStyle categoryTextStyle;
     private GUIStyle containerStyle;
+    private GUIStyle craftNameStyle;
+    private GUIStyle craftStyle;
     private GUIStyle labelStyle;
+    private GUIStyle loadWindowStyle;
     private GUIStyle numberFieldStyle;
     private GUIStyle settingsWindowStyle;
-    private GUIStyle shipNameStyle;
-    private GUIStyle shipStyle;
     private GUIStyle textStyle;
+    private GUIStyle textStyleRed;
     private GUIStyle toggleStyle;
     private GUIStyle tooltipStyle;
-    private GUIStyle windowStyle;
-    private int historyWindowID                                                   = 844526732;
-    private int loadShipID                                                        = 56706112;
-    private int settingsWindowID                                                  = 971199;
-    private List<Exception> exceptions                                            = new List<Exception>();
-    private List<Tuple<ConfigNode, string, double, string>> requestedBackups      = new List<Tuple<ConfigNode, string, double, string>>();
+    private int historyWindowID                                                         = 844526732;
+    private int loadCraftID                                                             = 56706112;
+    private int settingsWindowID                                                        = 971199;
+    private List<Exception> exceptions                                                  = new List<Exception>();
+    private List<KeyValuePair<string, string>> files                                    = new List<KeyValuePair<string, string>>();
+    private List<Tuple<ConfigNode, string, double, string>> requestedBackups            = new List<Tuple<ConfigNode, string, double, string>>();
     private Rect historyWindow;
-    private Rect settingsWindow                                                   = new Rect(0, 0, 230, 125);
-    private Rect tooltipRect                                                      = new Rect(0, 0, 230, 20);
-    private Rect windowPosition                                                   = new Rect(0f, 0f, 350, 505);
+    private Rect loadWindowPosition                                                     = new Rect(0f, 0f, 350, 505);
+    private Rect settingsWindow                                                         = new Rect(0, 0, 230, 225);
+    private Rect tooltipRect                                                            = new Rect(0, 0, 230, 20);
     private settings currentSettings;
     private string CurrentTooltip;
+    private string delimiter;
     private string historyFiles;
-    private string modName                                                        = "CraftHistory";
+    private string modName                                                              = "CraftHistory";
     private string saveInterval;
     private string showHistory;
-    private string[] files;
-    private Vector2 scrollPosition                                                = new Vector2();
+    private Vector2 scrollPosition                                                      = new Vector2();
     private Vector2 scrollPositionHistory;
-    private Version requiresUtilities                                             = new Version(1, 0, 1);
-    private GUIStyle textStyleRed;
+    private Version requiresUtilities                                                   = new Version(1, 0, 2);
 
     private void Awake()
     {
-      if (!Utilities.checkUtilitiesSupport(new Version(1, 0, 0), modName))
+      if (!Utilities.checkUtilitiesSupport(requiresUtilities, modName))
       {
         Destroy(this);
         return;
       }
       Utilities.debug(modName, "awake");
       GameEvents.onGUIApplicationLauncherReady.Add(OnGuiAppLauncherReady);
-      GameEvents.onEditorShipModified.Add(onShipChange);
+      GameEvents.onEditorShipModified.Add(onCraftChange);
     }
 
     private void Start()
@@ -76,18 +83,29 @@ namespace KerboKatz
       currentSettings.load(modName, "settings", modName);
       currentSettings.setDefault("saveAll", "false");
       currentSettings.setDefault("saveInterval", "1");
+      currentSettings.setDefault("hideUnloadableCrafts", "true");
+      currentSettings.setDefault("delimiter", ";");
+      currentSettings.setDefault("disableAutoSave", "false");
       currentSettings.set("editorScene", getEditorScene());
+      hideUnloadableCrafts = currentSettings.getBool("hideUnloadableCrafts");
+      disableAutoSave = currentSettings.getBool("disableAutoSave");
       saveAll = currentSettings.getBool("saveAll");
       saveInterval = currentSettings.getString("saveInterval");
+      delimiter = currentSettings.getString("delimiter");
       changePathTo(currentSettings.getString("editorScene"));
 
-      if (!windowCenterd && windowPosition.x == 0 && windowPosition.y == 0 && windowPosition.width > 0 && windowPosition.height > 0)
+      if (!windowCenterd && loadWindowPosition.x == 0 && loadWindowPosition.y == 0 && loadWindowPosition.width > 0 && loadWindowPosition.height > 0)
       {
-        windowPosition.x = Screen.width / 2 - windowPosition.width / 2;
-        windowPosition.y = Screen.height / 2 - windowPosition.height / 2;
-        settingsWindow.x = Screen.width;
-        settingsWindow.y = Screen.height - settingsWindow.height - 38;
-        windowCenterd    = true;
+        loadWindowPosition.x = Screen.width / 2 - loadWindowPosition.width / 2;
+        loadWindowPosition.y = Screen.height / 2 - loadWindowPosition.height / 2;
+        settingsWindow.x = currentSettings.getFloat("windowX");
+        settingsWindow.y = currentSettings.getFloat("windowY");
+        if (settingsWindow.x == 0 && settingsWindow.y == 0)
+        {
+          settingsWindow.x = Screen.width;
+          settingsWindow.y = Screen.height - settingsWindow.height - 38;
+        }
+        windowCenterd = true;
       }
     }
 
@@ -121,9 +139,13 @@ namespace KerboKatz
       {
         currentSettings.set("showSettings", false);
         currentSettings.save();
+        currentSettings.set("showSettings", false);
+        currentSettings.set("windowX", settingsWindow.x);
+        currentSettings.set("windowY", settingsWindow.y);
+        currentSettings.save();
       }
       GameEvents.onGUIApplicationLauncherReady.Remove(OnGuiAppLauncherReady);
-      GameEvents.onEditorShipModified.Remove(onShipChange);
+      GameEvents.onEditorShipModified.Remove(onCraftChange);
       if (button != null)
       {
         ApplicationLauncher.Instance.RemoveModApplication(button);
@@ -132,7 +154,7 @@ namespace KerboKatz
       {//if for some reason the game gets ended before all crafts are saved save them before destroying
         if (workerCompleted)
         {
-          backupShip();
+          backupCraft();
         }
       }
     }
@@ -141,7 +163,7 @@ namespace KerboKatz
     {
       currentSettings.set("editorScene", mode);
       currentSettings.set("savePath", "saves/" + HighLogic.SaveFolder + "/Ships/" + mode + "/");
-      updateShipList();
+      updateCraftList();
       showHistory = null;
     }
 
@@ -155,7 +177,7 @@ namespace KerboKatz
       }
       else
       {
-        updateShipList();
+        updateCraftList();
         Utilities.debug(modName, "Showing window");
         showLoadWindow = true;
       }
@@ -163,12 +185,13 @@ namespace KerboKatz
 
     private void FixedUpdate()
     {
-      if (Utilities.getUnixTimestamp() > nextCheck &&
+      if (!currentSettings.getBool("disableAutoSave") &&
+          Utilities.getUnixTimestamp() > nextCheck &&
           requestedBackups.Count > 0 &&
           workerCompleted)
       {
         updateNextCheck();
-        backupShip();
+        backupCraft();
       }
       if (exceptions.Count > 0)
       {
@@ -192,15 +215,16 @@ namespace KerboKatz
       }
     }
 
-    private bool backupShip()
+    private bool backupCraft()
     {
       try
       {
         int i = 0;
-        if(!currentSettings.getBool("saveAll")){
-          i = requestedBackups.Count-1;
+        if (!currentSettings.getBool("saveAll"))
+        {
+          i = requestedBackups.Count - 1;
         }
-        ThreadPool.QueueUserWorkItem(new WaitCallback(backgrounder), new object[] { requestedBackups[i], i});
+        ThreadPool.QueueUserWorkItem(new WaitCallback(backgrounder), new object[] { requestedBackups[i], i });
       }
       catch (Exception e)
       {
@@ -217,9 +241,9 @@ namespace KerboKatz
         object[] args = state as object[];
         Tuple<ConfigNode, string, double, string> shipCopy = args[0] as Tuple<ConfigNode, string, double, string>;
         int i;
-        int.TryParse(args[1].ToString(),out i);
+        int.TryParse(args[1].ToString(), out i);
         i++;
-        saveShip(shipCopy.Item1, shipCopy.Item2, shipCopy.Item3, shipCopy.Item4);
+        saveCraft(shipCopy.Item1, shipCopy.Item2, shipCopy.Item3, shipCopy.Item4);
         requestedBackups.RemoveRange(0, i);
         updateNextCheck();
         workerCompleted = true;
@@ -231,26 +255,28 @@ namespace KerboKatz
       }
     }
 
-    private void onShipChange(ShipConstruct ship)
+    private void onCraftChange(ShipConstruct craft)
     {
-      if (ship.Parts.Count <= 0)
+      if (currentSettings.getBool("disableAutoSave"))
         return;
-      if (!File.Exists(currentSettings.getString("savePath") + ship.shipName + ".craft"))
+      if (craft.Parts.Count <= 0)
         return;
-      var saveShip = ship.SaveShip();
-      var newTuple = new Tuple<ConfigNode, string, double, string>(saveShip, ship.shipName, Utilities.getUnixTimestamp(), currentSettings.getString("savePath"));
+      if (!File.Exists(currentSettings.getString("savePath") + craft.shipName + ".craft"))
+        return;
+      var saveCraft = craft.SaveShip();
+      var newTuple = new Tuple<ConfigNode, string, double, string>(saveCraft, craft.shipName, Utilities.getUnixTimestamp(), currentSettings.getString("savePath"));
       if (!requestedBackups.Contains(newTuple))
         requestedBackups.Add(newTuple);
       return;
     }
 
-    private void saveShip(ConfigNode savedShip, string shipName, double timestamp, string savePath)
+    private void saveCraft(ConfigNode savedCraft, string craftName, double timestamp, string savePath)
     {
-      savePath = savePath + shipName;
+      savePath = savePath + craftName;
       var hashedFile = savePath + "/" + timestamp + ".craft";
       Directory.CreateDirectory(savePath);
       if (!File.Exists(hashedFile))
-        savedShip.Save(hashedFile);
+        savedCraft.Save(hashedFile);
     }
 
     private string getEditorScene()
@@ -263,7 +289,8 @@ namespace KerboKatz
 
     private void applauncher()
     {
-      if(currentSettings.getBool("showSettings")){
+      if (currentSettings.getBool("showSettings"))
+      {
         currentSettings.set("showSettings", false);
       }
       else
@@ -272,25 +299,39 @@ namespace KerboKatz
       }
     }
 
-    private void loadShip(string shipFile)
+    private void loadCraft(string craftFile)
     {
-      EditorLogic.LoadShipFromFile(shipFile);
+      EditorLogic.LoadShipFromFile(craftFile);
     }
 
-    private void updateShipList()
+    private void updateCraftList()
     {
-      Utilities.debug(modName, "Updating shiplist. Clearing dictionaries...");
+      Utilities.debug(modName, "Updating craftlist. Clearing dictionaries...");
       filesDic.Clear();
       historyFilesDic.Clear();
+      files.Clear();
       Utilities.debug(modName, "Done clearing dictionaries. Getting files...");
-      files = getFiles(currentSettings.getString("savePath"));
-      Utilities.debug(modName, "Done getting files." + files.Length+ " files found. Looping through files...");
-      foreach (string file in files)
+      var filesArray = getFiles(currentSettings.getString("savePath"));
+      Utilities.debug(modName, "Done getting files." + filesArray.Length + " files found. Looping through files...");
+      foreach (string file in filesArray)
       {
         Utilities.debug(modName, "->Adding file to dictionary...");
         addToFilesDic(file);
         Utilities.debug(modName, "->Done! Checking for history...");
+        string catergory = "";
         var craftFileName = filesDic[file].Item1;
+        if (!string.IsNullOrEmpty(currentSettings.getString("delimiter")))
+        {
+          var categories = craftFileName.Split(currentSettings.getString("delimiter").ToCharArray(), 2, StringSplitOptions.None);
+          if (categories[0] != craftFileName)
+          {
+            catergory = categories[0];
+            filesDic[file].Item1 = categories[1];
+          }
+          Utilities.debug(modName, "->Seting category as " + catergory);
+        }
+        Utilities.debug(modName, "->Set category as " + catergory);
+        files.Add(new KeyValuePair<string, string>(file, catergory));
         historyFilesDic.Add(file, Utilities.reverseArray(getFiles(currentSettings.getString("savePath") + craftFileName + "/")));
         Utilities.debug(modName, "->Done! " + historyFilesDic[file].Length + " files found. Looping through files...");
         foreach (string hFile in historyFilesDic[file])
@@ -301,7 +342,22 @@ namespace KerboKatz
         }
         Utilities.debug(modName, "->Done!");
       }
-
+      files.Sort((x, y) =>
+      {
+        Utilities.debug(modName, x.Value + "= -> =" + y.Value);
+        if (String.IsNullOrEmpty(y.Value) && !String.IsNullOrEmpty(x.Value))
+        {
+          return -1;
+        }
+        else if (!String.IsNullOrEmpty(y.Value) && String.IsNullOrEmpty(x.Value))
+        {
+          return 1;
+        }
+        else
+        {
+          return x.Value.CompareTo(y.Value);
+        }
+      });
       Utilities.debug(modName, "Done!");
     }
 
@@ -318,19 +374,19 @@ namespace KerboKatz
       if (!filesDic.ContainsKey(file))
       {
         int partCount, stageCount;
-        float vesselCost;
-        bool vesselComplete;
-        getCraftInfo(file, out partCount, out stageCount, out vesselCost, out vesselComplete);
+        float craftCost;
+        bool craftComplete;
+        getCraftInfo(file, out partCount, out stageCount, out craftCost, out craftComplete);
         FileInfo fileInfo = new FileInfo(file);
-        filesDic.Add(file, new Tuple<string, DateTime, int, int, float, bool>(fileInfo.Name.Replace(".craft", ""), fileInfo.LastWriteTime, partCount, stageCount, vesselCost, vesselComplete));
+        filesDic.Add(file, new Tuple<string, DateTime, int, int, float, bool>(fileInfo.Name.Replace(".craft", ""), fileInfo.LastWriteTime, partCount, stageCount, craftCost, craftComplete));
       }
     }
 
-    private static void getCraftInfo(string file, out int partCount, out int stageCount, out float vesselCost,out bool vesselComplete)
+    private static void getCraftInfo(string file, out int partCount, out int stageCount, out float craftCost, out bool craftComplete)
     {
       var nodes = ConfigNode.Load(file).GetNodes("PART");
       partCount = nodes.Length;
-      Utilities.getVesselCostAndStages(nodes, out stageCount, out vesselCost, out vesselComplete);
+      Utilities.getCraftCostAndStages(nodes, out stageCount, out craftCost, out craftComplete);
     }
 
     #region ui
@@ -352,17 +408,17 @@ namespace KerboKatz
         }
         if (showLoadWindow)//load window
         {
-          windowPosition = GUILayout.Window(loadShipID, windowPosition, MainWindow, "Select a ship to load", windowStyle);
-          Utilities.clampToScreen(ref windowPosition);
-          Utilities.lockEditor(windowPosition, loadShipID.ToString());
+          loadWindowPosition = GUILayout.Window(loadCraftID, loadWindowPosition, loadWindow, "Select a craft to load", loadWindowStyle);
+          Utilities.clampToScreen(ref loadWindowPosition);
+          Utilities.lockEditor(loadWindowPosition, loadCraftID.ToString());
         }
         else
         {
-          EditorLogic.fetch.Unlock(loadShipID.ToString());
+          EditorLogic.fetch.Unlock(loadCraftID.ToString());
         }
         if (!String.IsNullOrEmpty(showHistory))//history window
         {
-          historyWindow = GUILayout.Window(historyWindowID, historyWindow, createHistoryWindow, "Select a ship from history to load", windowStyle);
+          historyWindow = GUILayout.Window(historyWindowID, historyWindow, createHistoryWindow, "Select a craft from history to load", loadWindowStyle);
           Utilities.clampToScreen(ref historyWindow);
           Utilities.lockEditor(historyWindow, historyWindowID.ToString());
         }
@@ -386,12 +442,12 @@ namespace KerboKatz
     private void InitStyle()
     {
       labelStyle                               = new GUIStyle(HighLogic.Skin.label);
-      labelStyle.stretchWidth = true;
+      labelStyle.stretchWidth                  = true;
 
-      windowStyle                              = new GUIStyle(HighLogic.Skin.window);
-      windowStyle.fixedWidth                   = 350;
-      windowStyle.padding.left                 = 0;
-      windowStyle.fixedHeight                  = 505;
+      loadWindowStyle                          = new GUIStyle(HighLogic.Skin.window);
+      loadWindowStyle.fixedWidth               = 350;
+      loadWindowStyle.padding.left             = 0;
+      loadWindowStyle.fixedHeight              = 505;
 
       settingsWindowStyle                      = new GUIStyle(HighLogic.Skin.window);
       settingsWindowStyle.fixedWidth           = 250;
@@ -401,20 +457,45 @@ namespace KerboKatz
       toggleStyle.normal.textColor             = labelStyle.normal.textColor;
       toggleStyle.active.textColor             = labelStyle.normal.textColor;
 
+      arrowStyle                               = new GUIStyle(toggleStyle);
+      arrowStyle.active.background             = Utilities.getTexture("CraftHistoryToggle_off_hover", "CraftHistory/Textures");
+      arrowStyle.onActive.background           = Utilities.getTexture("CraftHistoryToggle_on_hover", "CraftHistory/Textures");
+      arrowStyle.normal.background             = Utilities.getTexture("CraftHistoryToggle_off", "CraftHistory/Textures");
+      arrowStyle.onNormal.background           = Utilities.getTexture("CraftHistoryToggle_on", "CraftHistory/Textures");
+      arrowStyle.hover.background              = Utilities.getTexture("CraftHistoryToggle_off_hover", "CraftHistory/Textures");
+      arrowStyle.onHover.background            = Utilities.getTexture("CraftHistoryToggle_on_hover", "CraftHistory/Textures");
+
+      arrowStyle.fixedHeight                   = 20;
+      arrowStyle.fixedWidth                    = 20;
+      arrowStyle.overflow.bottom               = 0;
+      arrowStyle.overflow.top                  = 0;
+      arrowStyle.overflow.left                 = 0;
+      arrowStyle.overflow.right                = 0;
+      arrowStyle.padding.top                   = 0;
+      arrowStyle.padding.left                  = 0;
+      arrowStyle.padding.right                 = 0;
+      arrowStyle.padding.bottom                = 0;
+
       textStyle                                = new GUIStyle(HighLogic.Skin.label);
       textStyle.fixedWidth                     = 150;
       textStyle.margin.left                    = 10;
       textStyleRed                             = new GUIStyle(textStyle);
       textStyleRed.normal.textColor            = Color.red;
 
-      shipStyle                                = new GUIStyle(HighLogic.Skin.label);
-      shipStyle.fixedWidth                     = 270;
-      shipStyle.margin.left                    = 10;
+      craftStyle                               = new GUIStyle(HighLogic.Skin.label);
+      craftStyle.fixedWidth                    = 260;
+      craftStyle.margin.left                   = 10;
 
-      shipNameStyle                            = new GUIStyle(HighLogic.Skin.label);
-      shipNameStyle.fixedWidth                 = 270;
-      shipNameStyle.margin.left                = 10;
-      shipNameStyle.fontStyle                  = FontStyle.Bold;
+      craftNameStyle                           = new GUIStyle(craftStyle);
+      craftNameStyle.fixedWidth                = 240;
+      craftNameStyle.margin.left               = 5;
+      craftNameStyle.margin.top                = 0;
+      craftNameStyle.fontStyle                 = FontStyle.Bold;
+
+      categoryTextStyle                        = new GUIStyle(craftStyle);
+      categoryTextStyle.fontStyle              = FontStyle.Bold;
+      categoryTextStyle.padding.top            = 0;
+      categoryTextStyle.margin.top             = 2;
 
       containerStyle                           = new GUIStyle(GUI.skin.button);
       containerStyle.fixedWidth                = 230;
@@ -431,6 +512,7 @@ namespace KerboKatz
       buttonDeleteIconStyle                    = new GUIStyle(GUI.skin.button);
       buttonDeleteIconStyle.fixedWidth         = 38;
       buttonDeleteIconStyle.fixedHeight        = 38;
+      buttonDeleteIconStyle.margin.top         = 0;
       buttonDeleteIconStyle.normal.background  = Utilities.getTexture("button_Delete", "CraftHistory/Textures");
       buttonDeleteIconStyle.hover.background   = Utilities.getTexture("button_Delete_mouseover", "CraftHistory/Textures");
       buttonDeleteIconStyle.active             = buttonDeleteIconStyle.hover;
@@ -449,11 +531,16 @@ namespace KerboKatz
       buttonStyle.fixedWidth                   = 100;
       buttonStyle.alignment                    = TextAnchor.MiddleCenter;
 
+      categoryStyle                            = new GUIStyle(HighLogic.Skin.button);
+      categoryStyle.fixedWidth                 = 330;
+      categoryStyle.onHover                    = categoryStyle.normal;
+      categoryStyle.hover                      = categoryStyle.normal;
+
       areaStyle                                = new GUIStyle(HighLogic.Skin.button);
-      areaStyle.fixedWidth                     = 330;
+      areaStyle.fixedWidth                     = 320;
       areaStyle.onHover                        = areaStyle.normal;
       areaStyle.hover                          = areaStyle.normal;
-      
+
       tooltipStyle                             = new GUIStyle(HighLogic.Skin.label);
       tooltipStyle.fixedWidth                  = 230;
       tooltipStyle.padding.top                 = 5;
@@ -475,7 +562,15 @@ namespace KerboKatz
     private void createSettingsWindow(int id)
     {
       GUILayout.BeginVertical();
-      if (GUILayout.Toggle(saveAll, new GUIContent("Save every iteration of the ship", "Disable to only save the latest iteration of the ship after X seconds"), toggleStyle))
+      if (GUILayout.Toggle(disableAutoSave, new GUIContent("Disable CraftHistory", "If you enable this option you still will be able to use the category features without creating any history files of your crafts."), toggleStyle))
+      {
+        disableAutoSave = true;
+      }
+      else
+      {
+        disableAutoSave = false;
+      }
+      if (GUILayout.Toggle(saveAll, new GUIContent("Save every iteration of the craft", "Disable to only save the latest iteration of the craft after X seconds"), toggleStyle))
       {
         saveAll = true;
       }
@@ -483,19 +578,37 @@ namespace KerboKatz
       {
         saveAll = false;
       }
-      GUI.enabled = !saveAll;
       GUILayout.BeginHorizontal();
-      Utilities.createLabel("Save Interval (sec):", textStyle, "Saves the ship after these seconds");
+      GUI.enabled = !saveAll;
+      Utilities.createLabel("Save Interval (sec):", textStyle, "Saves the craft after these seconds");
       saveInterval = Utilities.getOnlyNumbers(GUILayout.TextField(saveInterval, 5, numberFieldStyle));
-      GUILayout.EndHorizontal();
       GUI.enabled = true;
+      GUILayout.EndHorizontal();
+
+      if (GUILayout.Toggle(hideUnloadableCrafts, new GUIContent("Hide unloadable craft"), toggleStyle))
+      {
+        hideUnloadableCrafts = true;
+      }
+      else
+      {
+        hideUnloadableCrafts = false;
+      }
+
+      GUILayout.BeginHorizontal();
+      Utilities.createLabel("Delimiter:", textStyle, "Save crafts with a prefix and this delimter to create categories.");
+      delimiter = GUILayout.TextField(delimiter, 1, numberFieldStyle);
+      GUILayout.EndHorizontal();
+
       GUILayout.Space(10);
       GUILayout.BeginHorizontal();
       GUILayout.FlexibleSpace();
       if (GUILayout.Button("Save", buttonStyle))
       {
+        currentSettings.set("disableAutoSave", disableAutoSave);
         currentSettings.set("saveAll", saveAll);
+        currentSettings.set("hideUnloadableCrafts", hideUnloadableCrafts);
         currentSettings.set("saveInterval", saveInterval);
+        currentSettings.set("delimiter", delimiter);
         currentSettings.save();
         currentSettings.set("showSettings", false);
       }
@@ -507,7 +620,7 @@ namespace KerboKatz
       CurrentTooltip = GUI.tooltip;
     }
 
-    private void MainWindow(int windowID)
+    private void loadWindow(int windowID)
     {
       GUILayout.BeginVertical();
 
@@ -524,35 +637,85 @@ namespace KerboKatz
       GUILayout.FlexibleSpace();
       GUILayout.EndHorizontal();
       scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, true, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Width(350), GUILayout.Height(420));
-      foreach (string file in files)
+      var currentCategory = "";
+      var startedCategory = false;
+      foreach (KeyValuePair<string, string> pair in files)
       {
-        var craftFileName  = filesDic[file].Item1;
-        var craftEditTime  = filesDic[file].Item2;
+        var file = pair.Key;
+        var category = pair.Value;
+        var craftFileName = filesDic[file].Item1;
+        var craftEditTime = filesDic[file].Item2;
         var craftPartCount = filesDic[file].Item3;
-        var craftStages    = filesDic[file].Item4;
-        var craftCost      = filesDic[file].Item5;
-        var vesselComplete = filesDic[file].Item6;
+        var craftStages = filesDic[file].Item4;
+        var craftCost = filesDic[file].Item5;
+        var craftComplete = filesDic[file].Item6;
+        if (!craftComplete && currentSettings.getBool("hideUnloadableCrafts"))
+          continue;
+        if (!string.IsNullOrEmpty(category))
+        {
+          if (category != currentCategory)
+          {
+            if (startedCategory)
+            {
+              GUILayout.EndVertical();
+            }
+            if (!toggleCategories.ContainsKey(category))
+              toggleCategories.Add(category, false);
+            GUILayout.BeginVertical(categoryStyle);
+            currentCategory = category;
+            startedCategory = true;
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Toggle(toggleCategories[category], new GUIContent("", "Show/hide " + currentCategory), arrowStyle))
+            {
+              toggleCategories[category] = true;
+            }
+            else
+            {
+              toggleCategories[category] = false;
+            }
+            Utilities.createLabel(currentCategory, categoryTextStyle);
+            GUILayout.EndHorizontal();
+          }
+          if (toggleCategories.ContainsKey(category) && !toggleCategories[category])
+            continue;
+        }
+        else
+        {
+          if (startedCategory)
+          {
+            GUILayout.EndVertical();
+            startedCategory = false;
+          }
+        }
         GUILayout.BeginVertical(areaStyle);
         GUILayout.BeginHorizontal();
-        createCraftInfo(craftFileName, craftEditTime, craftPartCount, craftStages, craftCost, vesselComplete);
+        bool show = createCraftInfo(file, craftFileName, craftEditTime, craftPartCount, craftStages, craftCost, craftComplete);
         GUILayout.BeginVertical();
-
-        string historyPath = currentSettings.getString("savePath") + craftFileName + "/";
-        if (Utilities.createButton("", buttonHistoryIconStyle, (!historyFilesDic.ContainsKey(file) || historyFilesDic[file].Length <= 0)))
+        createCraftLoadButton(file, craftComplete);
+        if (show)
         {
-          if (showHistory  == historyPath)
-            showHistory    = null;
-          else
-            showHistory    = historyPath;
-          historyFiles     = file;
-          historyWindow.x  = Input.mousePosition.x;
-          historyWindow.y  = Screen.height - Input.mousePosition.y;
-          GUI.BringWindowToFront(844526732);
+          string historyPath = currentSettings.getString("savePath") + craftFileName + "/";
+          if (Utilities.createButton("", buttonHistoryIconStyle, (!historyFilesDic.ContainsKey(file) || historyFilesDic[file].Length <= 0)))
+          {
+            if (showHistory == historyPath)
+              showHistory = null;
+            else
+              showHistory = historyPath;
+            historyFiles = file;
+            historyWindow.x = Input.mousePosition.x;
+            historyWindow.y = Screen.height - Input.mousePosition.y;
+            GUI.BringWindowToFront(844526732);
+          }
+          createCraftDeleteButton(file, historyPath);
         }
-        createCraftLoadButton(file, vesselComplete);
-        createCraftDeleteButton(file, historyPath);
+        GUILayout.Space(0);
         GUILayout.EndVertical();
+
         GUILayout.EndHorizontal();
+        GUILayout.EndVertical();
+      }
+      if (startedCategory)
+      {
         GUILayout.EndVertical();
       }
       GUILayout.EndScrollView();
@@ -560,14 +723,14 @@ namespace KerboKatz
       GUILayout.FlexibleSpace();
       if (Utilities.createButton("Close", buttonStyle))
       {
-        showLoadWindow     = false;
-        showHistory        = null;
+        showLoadWindow = false;
+        showHistory = null;
       }
       GUILayout.EndHorizontal();
       GUILayout.EndVertical();
       GUI.DragWindow();
-      tooltipHeight        = tooltipStyle.CalcHeight(new GUIContent(GUI.tooltip), tooltipStyle.fixedWidth);
-      CurrentTooltip       = GUI.tooltip;
+      tooltipHeight = tooltipStyle.CalcHeight(new GUIContent(GUI.tooltip), tooltipStyle.fixedWidth);
+      CurrentTooltip = GUI.tooltip;
     }
 
     private void createCraftDeleteButton(string file, string historyPath = null)
@@ -589,31 +752,49 @@ namespace KerboKatz
         if (Directory.Exists(historyPath))
           Directory.Delete(historyPath, true);
       }
-      updateShipList();
+      updateCraftList();
     }
 
-    private void createCraftLoadButton(string file, bool vesselComplete)
+    private void createCraftLoadButton(string file, bool craftComplete)
     {
-      if (Utilities.createButton("", buttonLoadIconStyle, !vesselComplete))
+      if (Utilities.createButton("", buttonLoadIconStyle, !craftComplete))
       {
-        loadShip(file);
+        loadCraft(file);
         showLoadWindow = false;
         showHistory = null;
       }
     }
 
-    private void createCraftInfo(string craftFileName, DateTime craftEditTime, int craftPartCount, int craftStages, float craftCost, bool vesselComplete, bool hideDate = false)
+    private bool createCraftInfo(string file, string craftFileName, DateTime craftEditTime, int craftPartCount, int craftStages, float craftCost, bool craftComplete, bool hideDate = false)
     {
       GUILayout.BeginVertical();
-      Utilities.createLabel(craftFileName, shipNameStyle);
-      if (!hideDate)
-        Utilities.createLabel(craftEditTime.ToString("yyyy.MM.dd HH:mm:ss"), shipStyle);
+      GUILayout.Space(8);
+      string uniqueID = file + craftPartCount + craftStages + craftCost + craftComplete + hideDate;
+      if (!toggleCategories.ContainsKey(uniqueID))
+        toggleCategories.Add(uniqueID, false);
+      GUILayout.BeginHorizontal();
+      if (GUILayout.Toggle(toggleCategories[uniqueID], new GUIContent("", "Show/hide extended info"), arrowStyle))
+      {
+        toggleCategories[uniqueID] = true;
+      }
+      else
+      {
+        toggleCategories[uniqueID] = false;
+      }
+      Utilities.createLabel(craftFileName, craftNameStyle);
+      GUILayout.EndHorizontal();
+      if (toggleCategories[uniqueID])
+      {
+        if (!hideDate)
+          Utilities.createLabel(craftEditTime.ToString("yyyy.MM.dd HH:mm:ss"), craftStyle);
 
-      Utilities.createLabel(getPartAndStageString(craftPartCount, "Part", false) + " in " + getPartAndStageString(craftStages, "Stage"), shipStyle);
-      Utilities.createLabel("Craft cost: " + craftCost.ToString("N0"), shipStyle);
-      if (!vesselComplete)
-        Utilities.createLabel("Craft is missing Parts", textStyleRed);
+        Utilities.createLabel(getPartAndStageString(craftPartCount, "Part", false) + " in " + getPartAndStageString(craftStages, "Stage"), craftStyle);
+        Utilities.createLabel("Craft cost: " + craftCost.ToString("N0"), craftStyle);
+        if (!craftComplete)
+          Utilities.createLabel("Craft is missing Parts", textStyleRed);
+      }
       GUILayout.EndVertical();
+      return toggleCategories[uniqueID];
     }
 
     private static string getPartAndStageString(int count, string p, bool zeroNumber = true)
@@ -643,21 +824,25 @@ namespace KerboKatz
       scrollPositionHistory = GUILayout.BeginScrollView(scrollPositionHistory, false, true, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Width(350), GUILayout.Height(445));
       foreach (string file in historyFilesDic[historyFiles])
       {
-        var craftFileName  = filesDic[file].Item1;
-        var craftEditTime  = filesDic[file].Item2;
+        var craftFileName = filesDic[file].Item1;
+        var craftEditTime = filesDic[file].Item2;
         var craftPartCount = filesDic[file].Item3;
-        var craftStages    = filesDic[file].Item4;
-        var craftCost      = filesDic[file].Item5;
-        var vesselComplete = filesDic[file].Item6;
+        var craftStages = filesDic[file].Item4;
+        var craftCost = filesDic[file].Item5;
+        var craftComplete = filesDic[file].Item6;
+        if (!craftComplete && currentSettings.getBool("hideUnloadableCrafts"))
+          continue;
         GUILayout.BeginVertical(areaStyle);
         GUILayout.BeginHorizontal();
-        double craftTime   = 0;
+        double craftTime = 0;
         double.TryParse(craftFileName, out craftTime);
-        craftFileName      = Utilities.convertUnixTimestampToDate(craftTime).ToString("yyyy.MM.dd HH:mm:ss");
-        createCraftInfo(craftFileName, craftEditTime, craftPartCount, craftStages, craftCost, vesselComplete, true);
+        craftFileName = Utilities.convertUnixTimestampToDate(craftTime).ToString("yyyy.MM.dd HH:mm:ss");
+        bool show = createCraftInfo(file, craftFileName, craftEditTime, craftPartCount, craftStages, craftCost, craftComplete, true);
         GUILayout.BeginVertical();
-        createCraftLoadButton(file, vesselComplete);
-        createCraftDeleteButton(file);
+        createCraftLoadButton(file, craftComplete);
+        if (show)
+          createCraftDeleteButton(file);
+        GUILayout.Space(0);
         GUILayout.EndVertical();
         GUILayout.EndHorizontal();
         GUILayout.EndVertical();
@@ -671,7 +856,7 @@ namespace KerboKatz
       }
       if (Utilities.createButton("Close", buttonStyle))
       {
-        showHistory        = null;
+        showHistory = null;
       }
       GUILayout.EndHorizontal();
       GUILayout.EndVertical();

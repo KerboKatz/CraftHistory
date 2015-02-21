@@ -1,3 +1,8 @@
+v 1.1.0
+ * Added option to disable the creation of histories
+ * Added option to hide unloadable crafts
+ * Added categories
+ * Changed method and variable names to be inline with eachother
 v 1.0.1
  *  Added checks for missing parts on already existing craft files
 v 1.0.0
