@@ -1,3 +1,19 @@
+v 1.2.0
+ * Added:
+  * Multiple categories per craft.
+  * Search for crafts.
+  * Window to add crafts to other categories.
+  * Option to create history points on demand: When clicking on save craft it will create a new history point.
+ * Removed:
+  * CraftHistory toggle. Disable all 3 toggles instead.
+ * Performance:
+   * Use of multithreading to speed up the loading all the info.
+   * Use of second thread to save a craft so it doesn't freeze the game.
+ * Misc:
+  * Shrunk icons to take a little less space.
+  * Split save all and save interval toggle. Only one of the 3 toggles can be active at a time.
+ * Fixed:
+  * Saving the same craft under different name.
 v 1.1.1
  * Sorting crafts by alphabet now
 v 1.1.0
