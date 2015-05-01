@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KerboKatz.Classes;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -6,51 +7,45 @@ using UnityEngine;
 
 namespace KerboKatz
 {
-  [KSPAddon(KSPAddon.Startup.EditorAny, true)]
+  [KSPAddon(KSPAddon.Startup.EditorAny, false)]
   public partial class CraftHistory : KerboKatzBase
   {
-    private bool saveWorkerCompleted                                                                                  = true;
-    private bool windowCenterd                                                                                        = false;
-    private bool workerCompleted                                                                                      = true;
-    private Dictionary<double, int> partCount                                                                         = new Dictionary<double, int>();
-    private Dictionary<string, List<KeyValuePair<string, string>>> categories                                         = new Dictionary<string, List<KeyValuePair<string, string>>>();
-    private Dictionary<string, string[]> historyFilesDic                                                              = new Dictionary<string, string[]>();
+    private bool saveWorkerCompleted = true;
+    private bool workerCompleted = true;
+    private Dictionary<double, int> partCount = new Dictionary<double, int>();
+    private Dictionary<string, List<KeyValuePair<string, string>>> categories = new Dictionary<string, List<KeyValuePair<string, string>>>();
+    private Dictionary<string, string[]> historyFilesDic = new Dictionary<string, string[]>();
     private Dictionary<string, craftObject> filesDicToUpdate = new Dictionary<string, craftObject>();
     private Dictionary<string, craftObject> filesDic = new Dictionary<string, craftObject>();
-    //private Dictionary<string, Tuple<string, DateTime, int, int, float, bool, string[], bool, bool>> filesDicToUpdate = new Dictionary<string, Tuple<string, DateTime, int, int, float, bool, string[], bool, bool>>();
-    //private Dictionary<string, Tuple<string, DateTime, int, int, float, bool>> filesDic                               = new Dictionary<string, Tuple<string, DateTime, int, int, float, bool>>();
-    private double nextCheck                                                                                          = 0;
-    private List<Exception> exceptions                                                                                = new List<Exception>();
-    private List<List<string>> sortOptions                                                                            = new List<List<string>>();
-    private List<string> currentCraftCategories                                                                       = new List<string>();
-    private List<string> existingCraftCategories                                                                      = new List<string>();
-    private List<string> historyFilesAddedToDic                                                                       = new List<string>();
-    private List<string> toBeRemoved                                                                                  = new List<string>();
-    private List<Tuple<ConfigNode, string, double, string>> requestedBackups                                          = new List<Tuple<ConfigNode, string, double, string>>();
-    private Rect editCategoriesWindow                                                                                 = new Rect(0, 0, 350, 505);
-    private Rect editExistingCraftCategoriesWindow                                                                    = new Rect(0, 0, 350, 505);
-    private Rect historyWindow;
-    private Rect loadWindowPosition                                                                                   = new Rect(0, 0, 350, 505);
-    private Rect settingsWindow                                                                                       = new Rect(0, 0, 230, 225);
-    private string existingCraftCategoriesFile                                                                        = "";
+    private double nextCheck = 0;
+    private List<Exception> exceptions = new List<Exception>();
+    private List<List<string>> sortOptions = new List<List<string>>();
+    private List<string> currentCraftCategories = new List<string>();
+    private List<string> existingCraftCategories = new List<string>();
+    private List<string> historyFilesAddedToDic = new List<string>();
+    private List<string> toBeRemoved = new List<string>();
+    private List<Tuple<ConfigNode, string, double, string>> requestedBackups = new List<Tuple<ConfigNode, string, double, string>>();
+    private string existingCraftCategoriesFile = "";
 
     public CraftHistory()
     {
       modName = "CraftHistory";
-      requiresUtilities = new Version(1, 0, 4);
+      tooltip = "Use left click to show the current crafts categories.\n Use right click to open the settings menu.";
+      requiresUtilities = new Version(1, 2, 0);
     }
 
-    public override void Awake()
+    protected override void Awake()
     {
       base.Awake();
       GameEvents.onEditorShipModified.Add(onCraftChange);
+      thisButton.onClick = onToolbar;
     }
-    public override void Start()
+
+    protected override void Started()
     {
-      base.Start();
       sortOptions.Add(new List<string> { "Name ▲", "Price ▲", "Stages ▲", "Part Count ▲", "Last edit ▲" });
       sortOptions.Add(new List<string> { "Name ▼", "Price ▼", "Stages ▼", "Part Count ▼", "Last edit ▼" });
-      DontDestroyOnLoad(this);
+      //DontDestroyOnLoad(this);
       currentSettings.setDefault("saveAll", "false");
       currentSettings.setDefault("saveInInterval", "false");
       currentSettings.setDefault("historyOnDemand", "false");
@@ -62,13 +57,13 @@ namespace KerboKatz
       currentSettings.setDefault("sortOrder", "0");
       currentSettings.set("editorScene", getEditorScene());
       hideUnloadableCrafts = currentSettings.getBool("hideUnloadableCrafts");
-      saveAll              = currentSettings.getBool("saveAll");
-      saveInterval         = currentSettings.getString("saveInterval");
-      delimiter            = currentSettings.getString("delimiter");
-      historyOnDemand      = currentSettings.getBool("historyOnDemand");
-      saveInInterval       = currentSettings.getBool("saveInInterval");
-      sortOption           = currentSettings.getInt("sortOption");
-      sortOrder            = currentSettings.getInt("sortOrder");
+      saveAll = currentSettings.getBool("saveAll");
+      saveInterval = currentSettings.getString("saveInterval");
+      delimiter = currentSettings.getString("delimiter");
+      historyOnDemand = currentSettings.getBool("historyOnDemand");
+      saveInInterval = currentSettings.getBool("saveInInterval");
+      sortOption = currentSettings.getInt("sortOption");
+      sortOrder = currentSettings.getInt("sortOrder");
 
       editExistingCraftCategoriesWindow.x = currentSettings.getFloat("editExistingCraftCategoriesWindowX");
       editExistingCraftCategoriesWindow.y = currentSettings.getFloat("editExistingCraftCategoriesWindowY");
@@ -84,46 +79,34 @@ namespace KerboKatz
         editCategoriesWindow.x = Screen.width;
         editCategoriesWindow.y = Screen.height - editCategoriesWindow.height - 38;
       }
-
-      if (!windowCenterd && loadWindowPosition.x == 0 && loadWindowPosition.y == 0 && loadWindowPosition.width > 0 && loadWindowPosition.height > 0)
-      {
-        loadWindowPosition.x = Screen.width / 2 - loadWindowPosition.width / 2;
-        loadWindowPosition.y = Screen.height / 2 - loadWindowPosition.height / 2;
-        settingsWindow.x     = currentSettings.getFloat("windowX");
-        settingsWindow.y     = currentSettings.getFloat("windowY");
-        if (settingsWindow.x == 0 && settingsWindow.y == 0)
-        {
-          settingsWindow.x = Screen.width;
-          settingsWindow.y = Screen.height - settingsWindow.height - 38;
-        }
-        windowCenterd = true;
-      }
       categories.Add("VAB", new List<KeyValuePair<string, string>>());
       categories.Add("SPH", new List<KeyValuePair<string, string>>());
-    }
 
-    public override void OnGuiAppLauncherReady()
-    {
-      if (button == null)
-      {
-        base.OnGuiAppLauncherReady();
-        button.Setup(applauncher, applauncher, Utilities.getTexture("icon", "CraftHistory/Textures"));
-        button.VisibleInScenes = ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB;
-      }
+      setIcon(Utilities.getTexture("icon", "CraftHistory/Textures"));
+      setAppLauncherScenes(ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB);
+
       if (EditorLogic.fetch.loadBtn.methodToInvoke != "toggleWindow")
       {
-        EditorLogic.fetch.loadBtn.methodToInvoke           = "toggleWindow";
+        EditorLogic.fetch.loadBtn.methodToInvoke = "toggleWindow";
         EditorLogic.fetch.loadBtn.scriptWithMethodToInvoke = this;
       }
       if (EditorLogic.fetch.saveBtn.methodToInvoke != "saveCraft")
       {
-        EditorLogic.fetch.saveBtn.methodToInvoke           = "saveCraft";
+        EditorLogic.fetch.saveBtn.methodToInvoke = "saveCraft";
         EditorLogic.fetch.saveBtn.scriptWithMethodToInvoke = this;
+      }
+      if (EditorLogic.fetch.exitBtn.methodToInvoke != "exitBtn")
+      {
+        EditorLogic.fetch.exitBtn.methodToInvoke = "exitBtn";
+        EditorLogic.fetch.exitBtn.scriptWithMethodToInvoke = this;
       }
       changePathTo(getEditorScene(), true);
     }
-
-    public override void OnDestroy()
+    public void exitBtn()
+    {
+      HighLogic.LoadScene(GameScenes.SPACECENTER);
+    }
+    protected override void OnDestroy()
     {
       Utilities.debug(modName, "destroy");
       if (currentSettings != null)
@@ -156,6 +139,7 @@ namespace KerboKatz
 
     private void changePathTo(string mode, bool dontUpdateCraftList = false)
     {
+      currentEditor = mode;
       currentSettings.set("editorScene", mode);
       currentSettings.set("savePath", "saves/" + HighLogic.SaveFolder + "/Ships/" + mode + "/");
       if (!dontUpdateCraftList)
@@ -166,7 +150,7 @@ namespace KerboKatz
     private void FixedUpdate()
     {
       if ((currentSettings.getBool("saveAll") || currentSettings.getBool("saveInInterval")) &&
-          Utilities.getUnixTimestamp() > nextCheck &&
+          Time.time > nextCheck &&
           requestedBackups.Count > 0 &&
           workerCompleted)
       {
@@ -187,11 +171,11 @@ namespace KerboKatz
     {
       if (currentSettings.getBool("saveAll"))
       {
-        nextCheck = Utilities.getUnixTimestamp() + 1;
+        nextCheck = Time.time + 1;
       }
       else
       {
-        nextCheck = Utilities.getUnixTimestamp() + currentSettings.getDouble("saveInterval");
+        nextCheck = Time.time + currentSettings.getDouble("saveInterval");
       }
     }
 
@@ -244,6 +228,8 @@ namespace KerboKatz
 
     private void onCraftChange(ShipConstruct craft)
     {
+      if (currentSettings == null)
+        return;
       if (!currentSettings.getBool("saveAll") && !currentSettings.getBool("saveInInterval"))
         return;
       if (craft.Parts.Count <= 0)
@@ -274,6 +260,11 @@ namespace KerboKatz
 
     private void saveCraft()
     {
+      //var fileName = getEditorScene() + "_" + EditorLogic.fetch.ship.shipName;
+      //ShipConstruction.CaptureThumbnail(EditorLogic.fetch.ship, "/saves/" + HighLogic.SaveFolder + "/Ships/@thumbs/", fileName);
+      var fileName = HighLogic.SaveFolder + "_" + getEditorScene() + "_" + EditorLogic.fetch.ship.shipName;
+      ShipConstruction.CaptureThumbnail(EditorLogic.fetch.ship, "/thumbs/", fileName);
+      GetThumbnail(fileName, true);
       ThreadPool.QueueUserWorkItem(new WaitCallback(saveCraft), new object[] { EditorLogic.fetch.ship, currentCraftCategories, currentSettings.getString("historyOnDemand"), getSavePath(), EditorLogic.fetch.shipNameField.Text });
     }
 
@@ -290,16 +281,16 @@ namespace KerboKatz
         }
         saveWorkerCompleted = false;
         ConfigNode currentCraft;
-        object[] args       = state as object[];
-        var shipConstruct   = args[0] as ShipConstruct;
-        var currentCats     = args[1] as List<string>;
-        var savePath        = args[3] as string;
+        object[] args = state as object[];
+        var shipConstruct = args[0] as ShipConstruct;
+        var currentCats = args[1] as List<string>;
+        var savePath = args[3] as string;
         var historyOnDemand = args[2] as string;
-        if(shipConstruct!=null)
-          currentCraft      = shipConstruct.SaveShip();
+        if (shipConstruct != null)
+          currentCraft = shipConstruct.SaveShip();
         else
-          currentCraft      = ConfigNode.Load(args[0] as string);
-        var shipName        = args[4] as string;//shipConstruct.shipName;
+          currentCraft = ConfigNode.Load(args[0] as string);
+        var shipName = args[4] as string;//shipConstruct.shipName;
         currentCraft.SetValue("ship", shipName);
         currentCraft.RemoveValues("category");
         foreach (string currentCat in currentCats)
@@ -337,7 +328,7 @@ namespace KerboKatz
         return "VAB";
     }
 
-    private void applauncher()
+    protected override void onToolbar()
     {
       if (Input.GetMouseButtonUp(0))
       {//left mouse button
@@ -406,12 +397,12 @@ namespace KerboKatz
     {
       try
       {
-        object[] args             = state as object[];
-        string file               = args[0] as string;
-        string isHistoryFileS     = args[1] as string;
+        object[] args = state as object[];
+        string file = args[0] as string;
+        string isHistoryFileS = args[1] as string;
         string overwriteExistingS = args[2] as string;
         bool isHistoryFile;
-        if (isHistoryFileS        == "True")
+        if (isHistoryFileS == "True")
         {
           isHistoryFile = true;
         }
@@ -447,17 +438,6 @@ namespace KerboKatz
           isHistoryFile,//8
           overwriteExisting//9
          ));
-        /*filesDicToUpdate.Add(file, new Tuple<string, DateTime, int, int, float, bool, string[], bool, bool>(
-          fileInfo.Name.Replace(".craft", ""),//1
-          fileInfo.LastWriteTime,//2
-          partCount,//3
-          stageCount,//4
-          craftCost,//5
-          craftComplete,//6
-          craftCategories,//7
-          isHistoryFile,//8
-          overwriteExisting//9
-          ));*/
       }
       catch (Exception e)
       {
@@ -485,7 +465,7 @@ namespace KerboKatz
           {
             return x.Key.CompareTo(y.Key);
           }
-          else 
+          else
           {
             if (filesDic.ContainsKey(x.Value) && filesDic.ContainsKey(y.Value))
             {
@@ -499,7 +479,7 @@ namespace KerboKatz
               {
                 returnV = choseSortOption(x.Value, y.Value, sortOption);
               }
-                return returnV;
+              return returnV;
             }
             return x.Value.CompareTo(y.Value);
           }
@@ -600,7 +580,7 @@ namespace KerboKatz
       var nodes = ConfigNode.Load(file);
       var partNodes = nodes.GetNodes("PART");
       partCount = partNodes.Length;
-      Utilities.getCraftCostAndStages(nodes, partNodes, out stageCount, out craftCost, out craftComplete, out craftCategories);
+      Utilities.Craft.getCraftCostAndStages(nodes, partNodes, out stageCount, out craftCost, out craftComplete, out craftCategories);
     }
 
     private string getCraftTypeByFilePath(string path)
@@ -632,13 +612,6 @@ namespace KerboKatz
               filesDicToUpdate[cur].stageCount,
               filesDicToUpdate[cur].craftCost,
               filesDicToUpdate[cur].craftComplete));
-            /*filesDic.Add(cur, new Tuple<string, DateTime, int, int, float, bool>(
-              filesDicToUpdate[cur].Item1,
-              filesDicToUpdate[cur].Item2,
-              filesDicToUpdate[cur].Item3,
-              filesDicToUpdate[cur].Item4,
-              filesDicToUpdate[cur].Item5,
-              filesDicToUpdate[cur].Item6));*/
             if (!filesDicToUpdate[cur].isHistoryFile)
             {
               var addedToCategories = false;

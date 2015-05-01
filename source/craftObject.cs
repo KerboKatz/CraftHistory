@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace KerboKatz
 {
-  class craftObject
+  internal class craftObject
   {
     public string craftName;
     public DateTime lastEdit;
@@ -16,7 +13,7 @@ namespace KerboKatz
     public string[] craftCategories;
     public bool isHistoryFile;
     public bool overwriteExisting;
-    public craftObject(string craftName, DateTime lastEdit, int partCount, int stageCount, float craftCost, bool craftComplete, string[] craftCategories=null, bool isHistoryFile = false, bool overwriteExisting=false)
+    public craftObject(string craftName, DateTime lastEdit, int partCount, int stageCount, float craftCost, bool craftComplete, string[] craftCategories = null, bool isHistoryFile = false, bool overwriteExisting = false)
     {
       this.craftName = craftName;//1
       this.lastEdit = lastEdit;
