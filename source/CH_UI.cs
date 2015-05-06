@@ -386,6 +386,14 @@ namespace KerboKatz
         if (filesDic.ContainsKey(existingCraftCategoriesFile))
         {
           ThreadPool.QueueUserWorkItem(new WaitCallback(saveCraft), new object[] { existingCraftCategoriesFile, existingCraftCategories, currentSettings.getString("historyOnDemand"), getSavePath(), filesDic[existingCraftCategoriesFile].craftName });
+          if (EditorLogic.fetch.ship.shipName == filesDic[existingCraftCategoriesFile].craftName)
+          {
+            currentCraftCategories.Clear();
+            foreach (var cat in existingCraftCategories)
+            {
+              currentCraftCategories.AddUnique(cat);
+            }
+          }
         }
       }
       if (Utilities.UI.createButton("Close", buttonStyle))
