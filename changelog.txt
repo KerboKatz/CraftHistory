@@ -1,5 +1,7 @@
-v 1.4.1
+v 1.4.2
  * Fixed changing of categories in a loaded vessel after editing it in the load window
+v 1.4.1
+ * recompiled with ksp 1.0.1 and KerboKatzUtilities 1.2.1
 v 1.4.0
  * Added:
   * Stock craft previews
