@@ -55,7 +55,10 @@ namespace KerboKatz
       currentSettings.setDefault("showEditCategories", "false");
       currentSettings.setDefault("sortOption", "0");
       currentSettings.setDefault("sortOrder", "0");
+      currentSettings.setDefault("deleteThumbnails", "True");
+
       currentSettings.set("editorScene", getEditorScene());
+
       hideUnloadableCrafts = currentSettings.getBool("hideUnloadableCrafts");
       saveAll = currentSettings.getBool("saveAll");
       saveInterval = currentSettings.getString("saveInterval");
@@ -64,6 +67,7 @@ namespace KerboKatz
       saveInInterval = currentSettings.getBool("saveInInterval");
       sortOption = currentSettings.getInt("sortOption");
       sortOrder = currentSettings.getInt("sortOrder");
+      deleteThumbnails = currentSettings.getBool("deleteThumbnails");
 
       editExistingCraftCategoriesWindow.x = currentSettings.getFloat("editExistingCraftCategoriesWindowX");
       editExistingCraftCategoriesWindow.y = currentSettings.getFloat("editExistingCraftCategoriesWindowY");
@@ -74,11 +78,6 @@ namespace KerboKatz
         editCategoriesWindow.x = currentSettings.getFloat("editCategoriesWindowX");
         editCategoriesWindow.y = currentSettings.getFloat("editCategoriesWindowY");
       }
-      else
-      {
-        editCategoriesWindow.x = Screen.width;
-        editCategoriesWindow.y = Screen.height - editCategoriesWindow.height - 38;
-      }
       categories.Add("VAB", new List<KeyValuePair<string, string>>());
       categories.Add("SPH", new List<KeyValuePair<string, string>>());
 
@@ -87,6 +86,7 @@ namespace KerboKatz
 
       if (EditorLogic.fetch.loadBtn.methodToInvoke != "toggleWindow")
       {
+        EditorLogic.fetch.loadBtn.Invoke(EditorLogic.fetch.loadBtn.methodToInvoke, 0);
         EditorLogic.fetch.loadBtn.methodToInvoke = "toggleWindow";
         EditorLogic.fetch.loadBtn.scriptWithMethodToInvoke = this;
       }
@@ -102,10 +102,13 @@ namespace KerboKatz
       }
       changePathTo(getEditorScene(), true);
     }
+
     public void exitBtn()
     {
+      GamePersistence.SaveGame("persistent", HighLogic.SaveFolder, SaveMode.OVERWRITE);
       HighLogic.LoadScene(GameScenes.SPACECENTER);
     }
+
     protected override void OnDestroy()
     {
       Utilities.debug(modName, "destroy");

@@ -56,11 +56,11 @@ namespace KerboKatz
     private GUIStyle textStyleRed;
     private GUIStyle toggleStyle;
     private GUIStyle verticalScrollbar;
-    private int editCategoriesWindowID = 971204;
-    private int editExistingCraftCategoriesWindowID = 971203;
-    private int historyWindowID = 971202;
-    private int loadCraftID = 971201;
-    private int settingsWindowID = 971200;
+    private static int editCategoriesWindowID = Utilities.UI.getNewWindowID;
+    private static int editExistingCraftCategoriesWindowID = Utilities.UI.getNewWindowID;
+    private static int historyWindowID = Utilities.UI.getNewWindowID;
+    private static int loadCraftID = Utilities.UI.getNewWindowID;
+    private static int settingsWindowID = Utilities.UI.getNewWindowID;
     private int sortOption = 0;
     private int sortOrder = 0;
     private string addToCategoryString = "";
@@ -82,6 +82,7 @@ namespace KerboKatz
     private GUIStyle craftStyleShort;
     private GUIStyle thumbnailStyle;
     private GUIStyle toolbarOptionLabelStyle;
+    private bool deleteThumbnails;
 
     private void toggleWindow()
     {
@@ -486,6 +487,14 @@ namespace KerboKatz
       {
         hideUnloadableCrafts = false;
       }
+      if (GUILayout.Toggle(deleteThumbnails, new GUIContent("Delete thumbnails", "When this option is enabled CraftHistory will delete the thumbnails associated with the craft"), toggleStyle))
+      {
+        deleteThumbnails = true;
+      }
+      else
+      {
+        deleteThumbnails = false;
+      }
 
       GUILayout.BeginHorizontal();
       Utilities.UI.createLabel("Delimiter:", textStyle, "Save crafts with a prefix and this delimter to create categories.");
@@ -522,6 +531,7 @@ namespace KerboKatz
         currentSettings.set("saveInterval", saveInterval);
         currentSettings.set("delimiter", delimiter);
         currentSettings.set("historyOnDemand", historyOnDemand);
+        currentSettings.set("deleteThumbnails", deleteThumbnails);
         if (currentSettings.getInt("sortOption") != sortOption || currentSettings.getInt("sortOrder") != sortOrder)
         {
           currentSettings.set("sortOption", sortOption);
@@ -742,6 +752,12 @@ namespace KerboKatz
           File.Delete(file);
         toBeRemoved.AddUnique(file);
         deleteHistory(historyPath, file);
+        if (currentSettings.getBool("deleteThumbnails"))
+        {
+          var thumbPath = KSPUtil.ApplicationRootPath + "/thumbs/" + HighLogic.SaveFolder + "_" + currentEditor + "_" + filesDic[file].craftName + ".png";
+          if (File.Exists(thumbPath))
+            File.Delete(thumbPath);
+        }
       }
     }
 
