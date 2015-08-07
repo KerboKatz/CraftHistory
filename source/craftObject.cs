@@ -9,7 +9,9 @@ namespace KerboKatz
     public int partCount;
     public int stageCount;
     public float craftCost;
+    public float offsetY;
     public bool craftComplete;
+    public bool drag;
     public string[] craftCategories;
     public bool isHistoryFile;
     public bool overwriteExisting;

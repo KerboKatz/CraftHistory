@@ -1,6 +1,9 @@
+v 1.4.4
+ * Fixed bug that caused all saved crafts to be deleted if shipname was nothing
+ * Simplified craft list to have all options available without expanding and made it more compact
 v 1.4.3
  * Fixed compatibility with KCT
- * Added option to detele thumbnails when craft is deleted
+ * Added option to delete thumbnails when craft is deleted
 v 1.4.2
  * Fixed changing of categories in a loaded vessel after editing it in the load window
 v 1.4.1

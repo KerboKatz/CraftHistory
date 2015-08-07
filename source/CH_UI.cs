@@ -83,6 +83,11 @@ namespace KerboKatz
     private GUIStyle thumbnailStyle;
     private GUIStyle toolbarOptionLabelStyle;
     private bool deleteThumbnails;
+    private GUIStyle areaStyleExpanded;
+    private GUIStyle emptyStyle;
+
+    private GUIStyle verticalScrollbarThumb;
+    private GUIStyle arrowBrightCatStyle;
 
     private void toggleWindow()
     {
@@ -121,6 +126,11 @@ namespace KerboKatz
 
     private void InitStyle()
     {
+      emptyStyle = new GUIStyle(HighLogic.Skin.label);
+      emptyStyle.padding.setToZero();
+      emptyStyle.margin.setToZero();
+      emptyStyle.border.setToZero();
+
       labelStyle = new GUIStyle(HighLogic.Skin.label);
       labelStyle.stretchWidth = true;
 
@@ -154,8 +164,19 @@ namespace KerboKatz
       arrowStyle.fixedWidth = 20;
       arrowStyle.padding.setToZero();
       arrowStyle.overflow.setToZero();
+      arrowStyle.margin.top = 4;
+      arrowStyle.margin.left = 4;
+
+      arrowBrightCatStyle = new GUIStyle(arrowStyle);
+      arrowBrightCatStyle.active.background = Utilities.getTexture("CraftHistoryToggle_bottom_off_hover", "CraftHistory/Textures");
+      arrowBrightCatStyle.onActive.background = Utilities.getTexture("CraftHistoryToggle_bottom_on_hover", "CraftHistory/Textures");
+      arrowBrightCatStyle.normal.background = Utilities.getTexture("CraftHistoryToggle_bottom_off", "CraftHistory/Textures");
+      arrowBrightCatStyle.onNormal.background = Utilities.getTexture("CraftHistoryToggle_bottom_on", "CraftHistory/Textures");
+      arrowBrightCatStyle.hover.background = Utilities.getTexture("CraftHistoryToggle_bottom_off_hover", "CraftHistory/Textures");
+      arrowBrightCatStyle.onHover.background = Utilities.getTexture("CraftHistoryToggle_bottom_on_hover", "CraftHistory/Textures");
 
       arrowBrightStyle = new GUIStyle(arrowStyle);
+      arrowBrightStyle.margin.setToZero();
       arrowBrightStyle.active.background = Utilities.getTexture("CraftHistoryToggle_bottom_off_hover", "CraftHistory/Textures");
       arrowBrightStyle.onActive.background = Utilities.getTexture("CraftHistoryToggle_bottom_on_hover", "CraftHistory/Textures");
       arrowBrightStyle.normal.background = Utilities.getTexture("CraftHistoryToggle_bottom_off", "CraftHistory/Textures");
@@ -197,23 +218,31 @@ namespace KerboKatz
       craftStyleShort = new GUIStyle(craftStyle);
       craftStyleShort.fixedWidth = 180;
       craftStyleShort.margin.left = 10;
+      craftStyleShort.fontSize = 9;
 
       thumbnailStyle = new GUIStyle(HighLogic.Skin.label);
       thumbnailStyle.padding.setToZero();
       thumbnailStyle.margin.setToZero();
-      thumbnailStyle.fixedHeight = 64;
-      thumbnailStyle.fixedWidth = 64;
+      thumbnailStyle.border.setToZero();
+      thumbnailStyle.fixedHeight = 50;
+      thumbnailStyle.fixedWidth = 50;
+      thumbnailStyle.margin.top = 7;
+      thumbnailStyle.margin.left = 15;
 
       craftNameStyle = new GUIStyle(craftStyle);
-      craftNameStyle.fixedWidth = 255;
+      craftNameStyle.fixedWidth = 137;//148;
       craftNameStyle.margin.left = 5;
-      craftNameStyle.margin.top = 0;
+      craftNameStyle.margin.top = 3;
       craftNameStyle.fontStyle = FontStyle.Bold;
+      craftNameStyle.wordWrap = false;
 
       categoryTextStyle = new GUIStyle(craftStyle);
       categoryTextStyle.fontStyle = FontStyle.Bold;
-      categoryTextStyle.padding.top = 0;
-      categoryTextStyle.margin.top = 2;
+      categoryTextStyle.padding.setToZero();
+      categoryTextStyle.margin.setToZero();
+      categoryTextStyle.margin.top = 7;
+      categoryTextStyle.fixedHeight = 30;
+
       categoryEditTextStyle = new GUIStyle(categoryTextStyle);
       categoryEditTextStyle.fixedWidth = 276;
       categoryEditTextStyle.padding.top = 5;
@@ -249,27 +278,52 @@ namespace KerboKatz
       buttonHistoryIconStyle.hover.background = Utilities.getTexture("button_History_mouseover", "CraftHistory/Textures");
       buttonHistoryIconStyle.active = buttonHistoryIconStyle.hover;
 
+      buttonEditCatIconStyle = new GUIStyle(buttonDeleteIconStyle);
+      buttonEditCatIconStyle.normal.background = Utilities.getTexture("button_Edit", "CraftHistory/Textures");
+      buttonEditCatIconStyle.hover.background = Utilities.getTexture("button_Edit_mouseover", "CraftHistory/Textures");
+      buttonEditCatIconStyle.active = buttonEditCatIconStyle.hover;
+
       buttonLoadIconStyle = new GUIStyle(buttonDeleteIconStyle);
       buttonLoadIconStyle.normal.background = Utilities.getTexture("button_Load", "CraftHistory/Textures");
       buttonLoadIconStyle.hover.background = Utilities.getTexture("button_Load_mouseover", "CraftHistory/Textures");
+      buttonLoadIconStyle.fixedWidth = 26;
+      buttonLoadIconStyle.fixedHeight = 26;
       buttonLoadIconStyle.active = buttonLoadIconStyle.hover;
+      buttonLoadIconStyle.border.setToZero();
+      buttonLoadIconStyle.margin.setToZero();
+      buttonLoadIconStyle.padding.setToZero();
+      buttonLoadIconStyle.margin.left = 5;
+      buttonLoadIconStyle.margin.top = 1;
+
+
+      buttonDeleteIconStyle = new GUIStyle(buttonLoadIconStyle);
+      buttonDeleteIconStyle.normal.background = Utilities.getTexture("button_Delete", "CraftHistory/Textures");
+      buttonDeleteIconStyle.hover.background = Utilities.getTexture("button_Delete_mouseover", "CraftHistory/Textures");
+      buttonDeleteIconStyle.active = buttonDeleteIconStyle.hover;
+
+      buttonHistoryIconStyle = new GUIStyle(buttonLoadIconStyle);
+      buttonHistoryIconStyle.normal.background = Utilities.getTexture("button_History", "CraftHistory/Textures");
+      buttonHistoryIconStyle.hover.background = Utilities.getTexture("button_History_mouseover", "CraftHistory/Textures");
+      buttonHistoryIconStyle.active = buttonHistoryIconStyle.hover;
+
+      buttonEditCatIconStyle = new GUIStyle(buttonLoadIconStyle);
+      buttonEditCatIconStyle.normal.background = Utilities.getTexture("button_Edit", "CraftHistory/Textures");
+      buttonEditCatIconStyle.hover.background = Utilities.getTexture("button_Edit_mouseover", "CraftHistory/Textures");
+      buttonEditCatIconStyle.active = buttonEditCatIconStyle.hover;
 
       addCatLoadIconStyle = new GUIStyle(buttonDeleteIconStyle);
       addCatLoadIconStyle.normal.background = Utilities.getTexture("button_Save", "CraftHistory/Textures");
       addCatLoadIconStyle.hover.background = Utilities.getTexture("button_Save_mouseover", "CraftHistory/Textures");
       addCatLoadIconStyle.active = buttonLoadIconStyle.hover;
 
-      buttonEditCatIconStyle = new GUIStyle(buttonDeleteIconStyle);
-      buttonEditCatIconStyle.normal.background = Utilities.getTexture("button_Edit", "CraftHistory/Textures");
-      buttonEditCatIconStyle.hover.background = Utilities.getTexture("button_Edit_mouseover", "CraftHistory/Textures");
-      buttonEditCatIconStyle.active = buttonEditCatIconStyle.hover;
 
-      prevButtonStyle = new GUIStyle(buttonDeleteIconStyle);
+      prevButtonStyle = new GUIStyle(GUI.skin.button);
       prevButtonStyle.fixedWidth = 20;
       prevButtonStyle.fixedHeight = 20;
       prevButtonStyle.normal.background = GUI.skin.button.normal.background;
       prevButtonStyle.hover.background = GUI.skin.button.hover.background;
       prevButtonStyle.active = buttonLoadIconStyle.hover;
+
       ascDescButtonStyle = new GUIStyle(prevButtonStyle);
       ascDescButtonStyle.fixedWidth = 40;
       ascDescButtonStyle.fixedHeight = 20;
@@ -287,17 +341,21 @@ namespace KerboKatz
       scrollview.margin.right = 0;
       scrollview.margin.left = 5;
 
-      categoryStyle = new GUIStyle(HighLogic.Skin.button);
+      categoryStyle = new GUIStyle(HighLogic.Skin.box);
+      categoryStyle.margin.top = 5;
       categoryStyle.fixedWidth = 330;
-      categoryStyle.margin.left = 0;
-      categoryStyle.margin.right = 0;
-      categoryStyle.padding.left = 0;
-      categoryStyle.padding.right = 0;
       categoryStyle.onHover = categoryStyle.normal;
       categoryStyle.hover = categoryStyle.normal;
 
+
       areaStyle = new GUIStyle(HighLogic.Skin.button);
-      areaStyle.fixedWidth = 330;//320
+      areaStyle.padding.setToZero();
+      areaStyle.margin.setToZero();
+      areaStyle.fixedWidth = 322;
+      areaStyleExpanded = new GUIStyle(areaStyle);
+      areaStyleExpanded.fixedHeight = 90;
+      areaStyleExpanded.fixedWidth = 322;
+
       areaStyle.onHover = areaStyle.normal;
       areaStyle.hover = areaStyle.normal;
       areaStyle.margin.left = 0;
@@ -308,6 +366,22 @@ namespace KerboKatz
       verticalScrollbar.padding.right = 0;
       verticalScrollbar.margin.left = 0;
       verticalScrollbar.margin.right = 0;
+      verticalScrollbar.fixedWidth = 8;
+      verticalScrollbar.hover.background = Utilities.getTexture("verticalScrollbar", "CraftHistory/Textures");
+      verticalScrollbar.active.background = Utilities.getTexture("verticalScrollbar", "CraftHistory/Textures");
+      verticalScrollbar.normal.background = Utilities.getTexture("verticalScrollbar", "CraftHistory/Textures");
+      verticalScrollbar.border.top = 6;
+      verticalScrollbar.border.bottom = 6;
+
+      verticalScrollbarThumb = new GUIStyle();
+      verticalScrollbarThumb.fixedWidth = 8;
+      verticalScrollbarThumb.border.top = 6;
+      verticalScrollbarThumb.border.bottom = 6;
+      verticalScrollbarThumb.border.left = 4;
+      verticalScrollbarThumb.border.right = 4;
+      verticalScrollbarThumb.hover.background = Utilities.getTexture("verticalScrollbarThumb", "CraftHistory/Textures");
+      verticalScrollbarThumb.active.background = Utilities.getTexture("verticalScrollbarThumb", "CraftHistory/Textures");
+      verticalScrollbarThumb.normal.background = Utilities.getTexture("verticalScrollbarThumb", "CraftHistory/Textures"); 
 
       if (Utilities.UI.sortTextStyle == null)
         Utilities.UI.getTooltipStyle();
@@ -320,7 +394,7 @@ namespace KerboKatz
     private void editCategoriesBegin()
     {
       GUILayout.BeginVertical();
-      catWindowScrollPosition = Utilities.UI.beginScrollView(catWindowScrollPosition, 340, 390, false, true, GUIStyle.none, verticalScrollbar, scrollview);
+      catWindowScrollPosition = Utilities.UI.beginScrollView(catWindowScrollPosition, 340, 390, false, true, GUIStyle.none, null, scrollview);
     }
 
     private Texture2D GetThumbnail(String FileName, bool ignoreCache = false)
@@ -549,8 +623,8 @@ namespace KerboKatz
 
     private void loadWindow(int windowID)
     {
-      GUILayout.BeginVertical();
 
+      GUILayout.BeginVertical();
       GUILayout.BeginHorizontal();
       GUILayout.FlexibleSpace();
       if (Utilities.UI.createButton("VAB", buttonStyle, (currentSettings.getString("editorScene") == "VAB")))
@@ -567,8 +641,9 @@ namespace KerboKatz
       Utilities.UI.createLabel("Search:", searchTextStyle);
       searchCraft = GUILayout.TextField(searchCraft, int.MaxValue, searchFieldStyle);
       GUILayout.EndHorizontal();
-      loadWindowScrollPosition = Utilities.UI.beginScrollView(loadWindowScrollPosition, 340, 400, false, true, GUIStyle.none, verticalScrollbar, scrollview);
-
+      var before = loadWindowScrollPosition;
+      loadWindowScrollPosition = Utilities.UI.beginScrollView(loadWindowScrollPosition, 340, 400, false, true, GUIStyle.none,null,scrollview);
+      var scrollOffset = loadWindowScrollPosition - before;
       var currentCategory = "";
       var startedCategory = false;
       foreach (KeyValuePair<string, string> pair in categories[getCraftTypeByFilePath(currentSettings.getString("savePath"))])
@@ -582,67 +657,18 @@ namespace KerboKatz
         {
           continue;
         }
+        var craftInfo = filesDic[file];
         var category = pair.Key;
-        var craftName = filesDic[file].craftName;
-        var lastEdit = filesDic[file].lastEdit;
-        var partCount = filesDic[file].partCount;
-        var stageCount = filesDic[file].stageCount;
-        var craftCost = filesDic[file].craftCost;
-        var craftComplete = filesDic[file].craftComplete;
-        if (!craftComplete && currentSettings.getBool("hideUnloadableCrafts"))
+        if (!craftInfo.craftComplete && currentSettings.getBool("hideUnloadableCrafts"))
           continue;
-        if (!string.IsNullOrEmpty(category))
-        {
-          if (category != currentCategory)
-          {
-            if (startedCategory)
-            {
-              GUILayout.EndVertical();
-            }
-            if (!toggleCategories.ContainsKey(category))
-              toggleCategories.Add(category, false);
-            GUILayout.BeginVertical(categoryStyle);
-            currentCategory = category;
-            startedCategory = true;
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Toggle(toggleCategories[category], new GUIContent("", "Show/hide " + currentCategory), arrowStyle))
-            {
-              toggleCategories[category] = true;
-            }
-            else
-            {
-              toggleCategories[category] = false;
-            }
-            Utilities.UI.createLabel(currentCategory, categoryTextStyle);
-            GUILayout.EndHorizontal();
-          }
-          if (toggleCategories.ContainsKey(category) && !toggleCategories[category])
-            continue;
-        }
-        else
-        {
-          if (startedCategory)
-          {
-            GUILayout.EndVertical();
-            startedCategory = false;
-          }
-        }
-        GUILayout.BeginVertical(areaStyle);
-        GUILayout.BeginHorizontal();
-        bool show = createCraftInfo(file, craftName, lastEdit, partCount, stageCount, craftCost, craftComplete);
-        GUILayout.BeginVertical();
-        createCraftLoadButton(file, craftComplete);
-        if (show)
-        {
-          createCraftEditCatsButton(file);
-          string historyPath = createShowHistoryButton(file, craftName);
-          createCraftDeleteButton(file, historyPath);
-        }
-        GUILayout.Space(0);
-        GUILayout.EndVertical();
+        if (!createCategory(ref currentCategory, ref startedCategory, category))
+          continue;
 
-        GUILayout.EndHorizontal();
-        GUILayout.EndVertical();
+        displayCraft(file, craftInfo);
+        scrollOffset = updateDragAndDrop(scrollOffset, file);
+
+        GUILayout.Space(2);
+
       }
       if (startedCategory)
       {
@@ -660,8 +686,138 @@ namespace KerboKatz
       }
       GUILayout.EndHorizontal();
       GUILayout.EndVertical();
-      Utilities.UI.updateTooltipAndDrag();
+      Utilities.UI.updateTooltipAndDrag(200, new Rect(0, 0, 200, 25));
     }
+
+    private bool createCategory(ref string currentCategory, ref bool startedCategory, string category)
+    {
+      if (!string.IsNullOrEmpty(category))
+      {
+        if (category != currentCategory)
+        {
+          if (startedCategory)
+          {
+            GUILayout.EndVertical();
+          }
+          if (!toggleCategories.ContainsKey(category))
+            toggleCategories.Add(category, false);
+          GUILayout.BeginVertical(categoryStyle);
+          currentCategory = category;
+          startedCategory = true;
+          GUILayout.BeginHorizontal();
+          if (GUILayout.Toggle(toggleCategories[category], new GUIContent("", "Show/hide " + currentCategory), arrowBrightCatStyle))
+          {
+            toggleCategories[category] = true;
+          }
+          else
+          {
+            toggleCategories[category] = false;
+          }
+          Utilities.UI.createLabel(currentCategory, categoryTextStyle);
+          GUILayout.EndHorizontal();
+        }
+        if (toggleCategories.ContainsKey(category) && !toggleCategories[category])
+          return false;
+      }
+      else
+      {
+        if (startedCategory)
+        {
+          if (toggleCategories.ContainsKey(currentCategory) && toggleCategories[currentCategory])
+            GUILayout.Space(5);
+          GUILayout.EndVertical();
+          startedCategory = false;
+        }
+      }
+      return true;
+    }
+
+    private Vector2 updateDragAndDrop(Vector2 scrollOffset, string file)
+    {
+      if (filesDic[file].drag && (Event.current.type == EventType.mouseDrag || scrollOffset.y != 0))
+      {
+        if (scrollOffset.y == 0)
+        {
+          filesDic[file].offsetY -= Event.current.delta.y;
+        }
+        else
+        {
+          filesDic[file].offsetY -= scrollOffset.y;
+          scrollOffset.y = 0;
+        }
+      }
+      else if (!filesDic[file].drag)
+      {
+        filesDic[file].offsetY = Mathf.Lerp(filesDic[file].offsetY, 0, 0.1f);
+      }
+      if (Event.current.type == EventType.mouseDown && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
+      {
+        scrollOffset.y = 0;
+        filesDic[file].drag = true;
+      }
+      else if (Event.current.type == EventType.mouseUp)
+      {
+        filesDic[file].drag = false;
+      }
+      return scrollOffset;
+    }
+
+    private void displayCraft(string file, craftObject craftInfo)
+    {
+      if (!toggleExtendedInfo.ContainsKey(file))
+        toggleExtendedInfo.Add(file, false);
+        GUILayout.BeginVertical(areaStyle);
+        GUILayout.BeginHorizontal();
+          if (GUILayout.Toggle(toggleExtendedInfo[file], new GUIContent("", "Show/hide extended info"), arrowStyle))
+          {
+            toggleExtendedInfo[file] = true;
+          }
+          else
+          {
+            toggleExtendedInfo[file] = false;
+          }
+          GUILayout.BeginVertical();
+            Utilities.UI.createLabel(craftInfo.craftName, craftNameStyle);
+          GUILayout.EndVertical();
+          GUILayout.BeginVertical();
+            GUILayout.BeginHorizontal();
+              GUILayout.Space(25);
+              createCraftLoadButton(file, craftInfo.craftComplete);
+              createCraftEditCatsButton(file);
+              if (!craftInfo.isHistoryFile)
+              {
+                string historyPath = createShowHistoryButton(file, craftInfo.craftName);
+                createCraftDeleteButton(file, historyPath);
+              }
+              else
+              {
+                createCraftDeleteButton(file);
+              }
+            GUILayout.EndHorizontal();
+          GUILayout.EndVertical();
+        GUILayout.EndHorizontal();
+
+      if (toggleExtendedInfo[file])
+      {
+        GUILayout.Space(5);
+        GUILayout.BeginHorizontal();
+        GUILayout.BeginVertical();
+        Utilities.UI.createLabel(craftInfo.lastEdit.ToString("yyyy.MM.dd HH:mm:ss"), craftStyleShort);
+        Utilities.UI.createLabel(Utilities.Craft.getPartAndStageString(craftInfo.partCount, "Part", false) + " in " + Utilities.Craft.getPartAndStageString(craftInfo.stageCount, "Stage"), craftStyleShort);
+        Utilities.UI.createLabel("Craft cost: " + craftInfo.craftCost.ToString("N0"), craftStyleShort);
+        if (!craftInfo.craftComplete)
+          Utilities.UI.createLabel("Craft is missing Parts", textStyleRed);
+        GUILayout.Space(5);
+        GUILayout.EndVertical();
+        GUILayout.BeginVertical();
+        GUILayout.Label(new GUIContent(GetThumbnail(HighLogic.SaveFolder + "_" + currentEditor + "_" + craftInfo.craftName)), thumbnailStyle);
+        GUILayout.EndVertical();
+        GUILayout.EndHorizontal();
+      }
+
+      GUILayout.EndVertical();
+    }
+
 
     private string createShowHistoryButton(string file, string craftFileName)
     {
@@ -751,12 +907,15 @@ namespace KerboKatz
         if (File.Exists(file))
           File.Delete(file);
         toBeRemoved.AddUnique(file);
-        deleteHistory(historyPath, file);
-        if (currentSettings.getBool("deleteThumbnails"))
+        if (!string.IsNullOrEmpty(filesDic[file].craftName))
         {
-          var thumbPath = KSPUtil.ApplicationRootPath + "/thumbs/" + HighLogic.SaveFolder + "_" + currentEditor + "_" + filesDic[file].craftName + ".png";
-          if (File.Exists(thumbPath))
-            File.Delete(thumbPath);
+          deleteHistory(historyPath, file);
+          if (currentSettings.getBool("deleteThumbnails"))
+          {
+            var thumbPath = KSPUtil.ApplicationRootPath + "/thumbs/" + HighLogic.SaveFolder + "_" + currentEditor + "_" + filesDic[file].craftName + ".png";
+            if (File.Exists(thumbPath))
+              File.Delete(thumbPath);
+          }
         }
       }
     }
@@ -819,72 +978,25 @@ namespace KerboKatz
       }
     }
 
-    private bool createCraftInfo(string file, string craftFileName, DateTime craftEditTime, int craftPartCount, int craftStages, float craftCost, bool craftComplete, bool hideDate = false)
-    {
-      GUILayout.BeginVertical();
-      GUILayout.Space(4);
-      if (!toggleExtendedInfo.ContainsKey(file))
-        toggleExtendedInfo.Add(file, false);
-      GUILayout.BeginHorizontal();
-      if (GUILayout.Toggle(toggleExtendedInfo[file], new GUIContent("", "Show/hide extended info"), arrowStyle))
-      {
-        toggleExtendedInfo[file] = true;
-      }
-      else
-      {
-        toggleExtendedInfo[file] = false;
-      }
-      Utilities.UI.createLabel(craftFileName, craftNameStyle);
-      GUILayout.EndHorizontal();
-      if (toggleExtendedInfo[file])
-      {
-        GUILayout.BeginHorizontal(HighLogic.Skin.label);
-        GUILayout.BeginVertical(HighLogic.Skin.label);
-        if (!hideDate)
-          Utilities.UI.createLabel(craftEditTime.ToString("yyyy.MM.dd HH:mm:ss"), craftStyleShort);
-        Utilities.UI.createLabel(Utilities.Craft.getPartAndStageString(craftPartCount, "Part", false) + " in " + Utilities.Craft.getPartAndStageString(craftStages, "Stage"), craftStyleShort);
-        Utilities.UI.createLabel("Craft cost: " + craftCost.ToString("N0"), craftStyleShort);
-        if (!craftComplete)
-          Utilities.UI.createLabel("Craft is missing Parts", textStyleRed);
-        GUILayout.EndVertical();
-        GUILayout.BeginVertical(HighLogic.Skin.label);
-        GUILayout.Label(new GUIContent(GetThumbnail(HighLogic.SaveFolder + "_" + currentEditor + "_" + craftFileName)), thumbnailStyle);
-        GUILayout.EndVertical();
-        GUILayout.EndHorizontal();
-      }
-      GUILayout.EndVertical();
-      return toggleExtendedInfo[file];
-    }
-
     private void createHistoryWindow(int windowID)
     {
       GUILayout.BeginVertical();
 
-      scrollPositionHistory = GUILayout.BeginScrollView(scrollPositionHistory, false, true, GUIStyle.none, GUI.skin.verticalScrollbar, HighLogic.Skin.textArea, GUILayout.Width(350), GUILayout.Height(445));
+      scrollPositionHistory = Utilities.UI.beginScrollView(scrollPositionHistory, 340, 445, false, true, GUIStyle.none, null, scrollview);
       foreach (string file in historyFilesDic[historyFiles])
       {
         if (!filesDic.ContainsKey(file))
         {
           continue;
         }
-        var craftName = filesDic[file].craftName;
-        var lastEdit = filesDic[file].lastEdit;
-        var partCount = filesDic[file].partCount;
-        var stageCount = filesDic[file].stageCount;
-        var craftCost = filesDic[file].craftCost;
-        var craftComplete = filesDic[file].craftComplete;
-        if (!craftComplete && currentSettings.getBool("hideUnloadableCrafts"))
+        var craftInfo = filesDic[file];
+        if (!craftInfo.craftComplete && currentSettings.getBool("hideUnloadableCrafts"))
           continue;
         GUILayout.BeginVertical(areaStyle);
         GUILayout.BeginHorizontal();
-        double craftTime = 0;
-        double.TryParse(craftName, out craftTime);
-        craftName = Utilities.convertUnixTimestampToDate(craftTime).ToString("yyyy.MM.dd HH:mm:ss");
-        bool show = createCraftInfo(file, craftName, lastEdit, partCount, stageCount, craftCost, craftComplete, true);
+        craftInfo.craftName = craftInfo.lastEdit.ToString("yyyy.MM.dd HH:mm:ss");
+        displayCraft(file, craftInfo);
         GUILayout.BeginVertical();
-        createCraftLoadButton(file, craftComplete);
-        if (show)
-          createCraftDeleteButton(file);
         GUILayout.Space(0);
         GUILayout.EndVertical();
         GUILayout.EndHorizontal();

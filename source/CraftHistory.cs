@@ -263,8 +263,9 @@ namespace KerboKatz
 
     private void saveCraft()
     {
-      //var fileName = getEditorScene() + "_" + EditorLogic.fetch.ship.shipName;
-      //ShipConstruction.CaptureThumbnail(EditorLogic.fetch.ship, "/saves/" + HighLogic.SaveFolder + "/Ships/@thumbs/", fileName);
+      if (EditorLogic.fetch.shipNameField.Text.IsNullOrWhiteSpace())
+        return;
+      Utilities.debug(modName, EditorLogic.fetch.shipNameField.Text);
       var fileName = HighLogic.SaveFolder + "_" + getEditorScene() + "_" + EditorLogic.fetch.ship.shipName;
       ShipConstruction.CaptureThumbnail(EditorLogic.fetch.ship, "/thumbs/", fileName);
       GetThumbnail(fileName, true);
@@ -614,7 +615,10 @@ namespace KerboKatz
               filesDicToUpdate[cur].partCount,
               filesDicToUpdate[cur].stageCount,
               filesDicToUpdate[cur].craftCost,
-              filesDicToUpdate[cur].craftComplete));
+              filesDicToUpdate[cur].craftComplete,
+              null,
+              filesDicToUpdate[cur].isHistoryFile
+              ));
             if (!filesDicToUpdate[cur].isHistoryFile)
             {
               var addedToCategories = false;
