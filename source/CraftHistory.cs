@@ -90,7 +90,7 @@ namespace KerboKatz.CH
       LoadUI("CraftHistoryDeleteConfirmation", "CraftHistory/CraftHistory");
       LoadUI("CraftHistoryModalWindow", "CraftHistory/CraftHistory");
       //LoadUI("CraftHistoryActiveCraftCategories", "CraftHistory/CraftHistory");
-
+      
       GameEvents.onEditorShipModified.Add(OnShipModified);
       GameEvents.onEditorRestart.Add(OnEditorRestart);//fired when New Craft is pressed!
       //have to remove the default listener but since there is no way to do this we have to remove all listeners
@@ -107,6 +107,7 @@ namespace KerboKatz.CH
       mainSavePath = Path.Combine(mainSavePath, "Ships");
 
       mainSavePath = Path.GetFullPath(mainSavePath);
+      OnIsVABChange(IsVAB(), true);
       OnEditorRestart();
 
       InitSearchObjectPool();
@@ -240,12 +241,12 @@ namespace KerboKatz.CH
 
       currentCraftData.name = EditorLogic.fetch.ship.shipName;
       currentCraftData.path = Path.Combine(GetCurrentSaveDirectory().FullName, GetShipName()) + ".craft";
-
+      
       //save a thumbnail
       ShipConstruction.CaptureThumbnail(EditorLogic.fetch.ship, "thumbs", GetThumbnailName(currentCraftData.name, currentCraftData.path));
-
+      
       currentCraftData.configNode = EditorLogic.fetch.ship.SaveShip();
-
+      
       Log("Saving craft to: ", currentCraftData.path);
       currentCraftData.configNode.Save(currentCraftData.path);
       currentCraftData.fileInfo = new FileInfo(currentCraftData.path);
@@ -369,11 +370,20 @@ namespace KerboKatz.CH
 
     private void OnIsVABChange(bool arg0)
     {
+      OnIsVABChange(arg0, false);
+    }
+
+    private void OnIsVABChange(bool arg0, bool isStartUp)
+    {
       Log("OnIsVABChange");
       settings.isVAB = arg0;
       currentDirectory = new DirectoryInfo(GetFilesPath());
-      GetCraftFiles();
-      RefreshDirectories();
+      isHistoryDirectory = false;
+      if (!isStartUp)
+      {
+        GetCraftFiles();
+        RefreshDirectories();
+      }
     }
 
     private void RefreshDirectories()
