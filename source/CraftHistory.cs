@@ -75,7 +75,7 @@ namespace KerboKatz.CH
       modName = "CraftHistory";
       displayName = "CraftHistory";
       tooltip = "Use left click to show the current crafts categories.\n Use right click to open the settings menu.";
-      requiresUtilities = new Version(1, 3, 8);
+      requiresUtilities = new Version(1, 4, 0);
       ToolbarBase.instance.Add(this);
       Log("Init done!");
     }
