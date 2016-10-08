@@ -29,5 +29,6 @@
     public float backupDelay = 10;
     public bool hideUnloadable;
     public float uiScale = 100;
+    public bool isStock = false;
   }
 }

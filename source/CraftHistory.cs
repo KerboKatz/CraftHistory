@@ -67,6 +67,7 @@ namespace KerboKatz.CH
     private CraftData copyCraftData;
     private UIData modalWindow;
     private Image bigThumbnailImage;
+    private string stockPath;
 
     //private Pool<CraftData> craftDataPool;
 
@@ -102,6 +103,7 @@ namespace KerboKatz.CH
       ButtonEventReplacer.Add(EditorLogic.fetch.newBtn, NewShip, true);
 
       stockTexture = Instantiate(AssetBase.GetTexture("craftThumbGeneric"));
+      stockPath = Path.GetFullPath(Path.Combine(applicationRootPath, "Ships"));
       mainSavePath = Path.Combine(applicationRootPath, "saves");
       mainSavePath = Path.Combine(mainSavePath, HighLogic.SaveFolder);
       mainSavePath = Path.Combine(mainSavePath, "Ships");
@@ -304,6 +306,10 @@ namespace KerboKatz.CH
           var sphToggle = InitToggle(sph_vab, "SPH", !isVAB);
           var options = content.FindChild("Options");
 
+          var stockSave = content.FindChild("FolderSelect");
+          var stockToggle = InitToggle(stockSave, "ships", settings.isStock, OnIsStockChange);
+          var saveToggle = InitToggle(stockSave, "save", !settings.isStock);
+
           InitButton(options, "Load", LoadCraft);
           InitButton(options, "Merge", MergeCraft);
           InitButton(options, "Delete", DeleteActiveSelection);
@@ -315,7 +321,7 @@ namespace KerboKatz.CH
           if (!isHistoryDirectory)
             historyReturnButton.gameObject.SetActive(false);
           searchInput = InitInputField(content, "SearchBar", "");
-          searchInput.onValueChange.AddListener(FilterCraft);
+          searchInput.onValueChanged.AddListener(FilterCraft);
 
           bigThumbnailImage = GetComponentInChild<Image>(content, "BigThumbnail");
 
@@ -370,12 +376,18 @@ namespace KerboKatz.CH
 
     private void OnIsVABChange(bool arg0)
     {
+      Log("OnIsVABChange");
       OnIsVABChange(arg0, false);
+    }
+    private void OnIsStockChange(bool arg0)
+    {
+      Log("OnIsStockChange");
+      settings.isStock = arg0;
+      OnIsVABChange(settings.isVAB, false);
     }
 
     private void OnIsVABChange(bool arg0, bool isStartUp)
     {
-      Log("OnIsVABChange");
       settings.isVAB = arg0;
       currentDirectory = new DirectoryInfo(GetFilesPath());
       isHistoryDirectory = false;
@@ -1302,10 +1314,18 @@ namespace KerboKatz.CH
 
     private string GetThumbnailName(string name, string path)
     {
-      path = Path.GetDirectoryName(path).Replace(mainSavePath, "");
       var thumbnailName = new StringBuilder();
-      thumbnailName.Append(HighLogic.SaveFolder);
-      thumbnailName.Append("_");
+      if (settings.isStock)
+      {
+        path = Path.GetDirectoryName(path).Replace(stockPath, "");
+      }
+      else
+      {
+        thumbnailName.Append(HighLogic.SaveFolder);
+        thumbnailName.Append("_");
+        path = Path.GetDirectoryName(path).Replace(mainSavePath, "");
+      }
+      
       thumbnailName.Append(path);
       thumbnailName.Append("_");
       thumbnailName.Append(KSPUtil.SanitizeString(name, '_', false));
@@ -1315,6 +1335,10 @@ namespace KerboKatz.CH
     private string GetFilesPath()
     {
       var path = mainSavePath;
+      if (settings.isStock)
+      {
+        path = stockPath;
+      }
       if (settings.isVAB)
       {
         path = Path.Combine(path, "VAB");
