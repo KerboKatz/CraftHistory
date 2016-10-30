@@ -76,7 +76,7 @@ namespace KerboKatz.CH
       modName = "CraftHistory";
       displayName = "CraftHistory";
       tooltip = "Use left click to show the current crafts categories.\n Use right click to open the settings menu.";
-      requiresUtilities = new Version(1, 4, 0);
+      requiresUtilities = new Version(1, 4, 6);
       ToolbarBase.instance.Add(this);
       Log("Init done!");
     }
@@ -1423,6 +1423,14 @@ namespace KerboKatz.CH
       get
       {
         return AssetLoader.GetAsset<Sprite>("CraftHistory", "Icons", "CraftHistory/CraftHistory");//Utilities.GetTexture("icon", "CraftHistory/Textures");
+      }
+    }
+
+    public bool useKKToolbar
+    {
+      get
+      {
+        return true;
       }
     }
 
