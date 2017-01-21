@@ -339,7 +339,7 @@ namespace KerboKatz.CH
           InitToggle(prefabWindow, "disable", settings.backupInterval == BackupInterval.Disabled, (isOn) => { if (isOn) OnBackupInterval(BackupInterval.Disabled); });
           InitInputField(prefabWindow, "IntervalOption", settings.backupDelay.ToString(), OnBackupDelayChange);
           InitToggle(prefabWindow, "HideUnloadableOption", settings.hideUnloadable, OnHideUnloadableChange);
-          InitDropdown(prefabWindow, "SortOption", OnSortOptionChange, (int)settings.sortOption);
+          InitDropdown(prefabWindow, "SortOption", OnSortOptionChange, (int)settings.sortOption,new List<string>() {"last change"});
           InitToggle(prefabWindow, "SortOption", settings.ascending, OnAscendingChange);
           InitSlider(prefabWindow, "UIscale", settings.uiScale, OnUIScaleChange);
           break;
@@ -782,6 +782,11 @@ namespace KerboKatz.CH
       Log("OnSortOptionChange");
       settings.sortOption = (SortOptions)arg0;
       SaveSettings();
+      foreach(var data in craftData)
+      {
+        UpdateCraftGameObjectName(data);
+      }
+      SortCraftsAndFolders();
     }
 
     private void OnBackupInterval(BackupInterval arg0)
@@ -1271,6 +1276,9 @@ namespace KerboKatz.CH
 
         case SortOptions.Cost:
           data.gameObject.name = "2 - Craft - " + data.cost;
+          break;
+        case SortOptions.LastChange:
+          data.gameObject.name = "2 - Craft - " + data.lastSave.ToString("yyyy-MM-dd HH:mm:ss");
           break;
       }
     }

@@ -5,7 +5,8 @@
     Name,
     Parts,
     Stages,
-    Cost
+    Cost,
+    LastChange
   }
 
   public enum BackupInterval
