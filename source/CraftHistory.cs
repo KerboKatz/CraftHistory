@@ -91,7 +91,7 @@ namespace KerboKatz.CH
       LoadUI("CraftHistoryDeleteConfirmation", "CraftHistory/CraftHistory");
       LoadUI("CraftHistoryModalWindow", "CraftHistory/CraftHistory");
       //LoadUI("CraftHistoryActiveCraftCategories", "CraftHistory/CraftHistory");
-      
+
       GameEvents.onEditorShipModified.Add(OnShipModified);
       GameEvents.onEditorRestart.Add(OnEditorRestart);//fired when New Craft is pressed!
       //have to remove the default listener but since there is no way to do this we have to remove all listeners
@@ -243,12 +243,12 @@ namespace KerboKatz.CH
 
       currentCraftData.name = EditorLogic.fetch.ship.shipName;
       currentCraftData.path = Path.Combine(GetCurrentSaveDirectory().FullName, GetShipName()) + ".craft";
-      
+
       //save a thumbnail
       ShipConstruction.CaptureThumbnail(EditorLogic.fetch.ship, "thumbs", GetThumbnailName(currentCraftData.name, currentCraftData.path));
-      
+
       currentCraftData.configNode = EditorLogic.fetch.ship.SaveShip();
-      
+
       Log("Saving craft to: ", currentCraftData.path);
       currentCraftData.configNode.Save(currentCraftData.path);
       currentCraftData.fileInfo = new FileInfo(currentCraftData.path);
@@ -339,7 +339,7 @@ namespace KerboKatz.CH
           InitToggle(prefabWindow, "disable", settings.backupInterval == BackupInterval.Disabled, (isOn) => { if (isOn) OnBackupInterval(BackupInterval.Disabled); });
           InitInputField(prefabWindow, "IntervalOption", settings.backupDelay.ToString(), OnBackupDelayChange);
           InitToggle(prefabWindow, "HideUnloadableOption", settings.hideUnloadable, OnHideUnloadableChange);
-          InitDropdown(prefabWindow, "SortOption", OnSortOptionChange, (int)settings.sortOption,new List<string>() {"last change"});
+          InitDropdown(prefabWindow, "SortOption", OnSortOptionChange, (int)settings.sortOption, new List<string>() { "last change" });
           InitToggle(prefabWindow, "SortOption", settings.ascending, OnAscendingChange);
           InitSlider(prefabWindow, "UIscale", settings.uiScale, OnUIScaleChange);
           break;
@@ -606,6 +606,7 @@ namespace KerboKatz.CH
       Log("OnHideUnloadableChange");
       settings.hideUnloadable = arg0;
       SaveSettings();
+      OnIsVABChange(settings.isVAB, false);
     }
 
     private void OnBackupDelayChange(string arg0)
@@ -782,7 +783,7 @@ namespace KerboKatz.CH
       Log("OnSortOptionChange");
       settings.sortOption = (SortOptions)arg0;
       SaveSettings();
-      foreach(var data in craftData)
+      foreach (var data in craftData)
       {
         UpdateCraftGameObjectName(data);
       }
@@ -1182,6 +1183,9 @@ namespace KerboKatz.CH
       data.nameInputField = InitInputField(newCraftOption.transform, "Name", data.name);
       if (!data.completeCraft)
       {
+        var background = GetComponentInChild<Image>(newCraftOption.transform, "Background");
+        background.color = Color.red;
+        data.nameInputField.text += " (Incomplete!)";
         Log("Line 1137 Display incomplete craft warning!");
       }
 
@@ -1333,7 +1337,7 @@ namespace KerboKatz.CH
         thumbnailName.Append("_");
         path = Path.GetDirectoryName(path).Replace(mainSavePath, "");
       }
-      
+
       thumbnailName.Append(path);
       thumbnailName.Append("_");
       thumbnailName.Append(KSPUtil.SanitizeString(name, '_', false));
