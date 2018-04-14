@@ -76,7 +76,7 @@ namespace KerboKatz.CH
       modName = "CraftHistory";
       displayName = "CraftHistory";
       tooltip = "Use left click to show the current crafts categories.\n Use right click to open the settings menu.";
-      requiresUtilities = new Version(1, 4, 6);
+      requiresUtilities = new Version(1, 5, 2);
       ToolbarBase.instance.Add(this);
       Log("Init done!");
     }
@@ -280,33 +280,33 @@ namespace KerboKatz.CH
       {
         case "CraftHistory":
           loadCraftsWindow = uiWindow;
-          var content = prefabWindow.FindChild("Content");
-          var scrollView = content.FindChild("Scroll View");
-          var viewport = scrollView.FindChild("Viewport");
-          viewportContent = viewport.FindChild("Content");
-          template = viewportContent.FindChild("Template");
+          var content = prefabWindow.Find("Content");
+          var scrollView = content.Find("Scroll View");
+          var viewport = scrollView.Find("Viewport");
+          viewportContent = viewport.Find("Content");
+          template = viewportContent.Find("Template");
           template.SetParent(prefabWindow);
           template.gameObject.SetActive(false);
-          searchTemplate = viewportContent.FindChild("SearchTemplate");
+          searchTemplate = viewportContent.Find("SearchTemplate");
           searchTemplate.SetParent(prefabWindow);
           searchTemplate.gameObject.SetActive(false);
 
-          var folders = content.FindChild("Folders");
-          var foldersScrollView = folders.FindChild("Scroll View");
-          var foldersViewport = foldersScrollView.FindChild("Viewport");
-          foldersViewportContent = foldersViewport.FindChild("Content");
+          var folders = content.Find("Folders");
+          var foldersScrollView = folders.Find("Scroll View");
+          var foldersViewport = foldersScrollView.Find("Viewport");
+          foldersViewportContent = foldersViewport.Find("Content");
 
-          categoryTemplate = foldersViewportContent.FindChild("CategoryTemplate");
+          categoryTemplate = foldersViewportContent.Find("CategoryTemplate");
           categoryTemplate.SetParent(prefabWindow);
           categoryTemplate.gameObject.SetActive(false);
 
           var isVAB = IsVAB();
-          var sph_vab = content.FindChild("VAB_SPH");
+          var sph_vab = content.Find("VAB_SPH");
           var vabToggle = InitToggle(sph_vab, "VAB", isVAB, OnIsVABChange);
           var sphToggle = InitToggle(sph_vab, "SPH", !isVAB);
-          var options = content.FindChild("Options");
+          var options = content.Find("Options");
 
-          var stockSave = content.FindChild("FolderSelect");
+          var stockSave = content.Find("FolderSelect");
           var stockToggle = InitToggle(stockSave, "ships", settings.isStock, OnIsStockChange);
           var saveToggle = InitToggle(stockSave, "save", !settings.isStock);
 
